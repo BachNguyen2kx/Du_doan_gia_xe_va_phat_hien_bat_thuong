@@ -1,0 +1,39 @@
+#  Core 
+numpy
+pandas
+scipy
+joblib
+regex
+unicodedata2
+
+#  Stats 
+statsmodels
+
+#  Plotting 
+matplotlib
+seaborn
+
+#  Streamlit App 
+streamlit
+openpyxl
+xlrd
+plotly
+ydata-profiling
+
+#  NLP / Text 
+nltk
+wordcloud
+
+#  Scikit-learn (ML + Anomaly Detection) 
+scikit-learn
+
+#  Gradient Boosting family 
+xgboost
+lightgbm
+catboost
+
+#  PySpark (cho phần dùng Spark DataFrame + MLlib) 
+pyspark
+
+#  Other utils 
+tqdm
