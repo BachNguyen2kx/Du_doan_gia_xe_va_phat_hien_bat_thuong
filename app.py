@@ -914,9 +914,7 @@ with tab1:
         ["Nhập tay từng xe", "Tải file CSV/XLSX"],
         horizontal=True
     )
-    # =
     # CASE 1: NHẬP TAY
-    # =
     if mode == "Nhập tay từng xe":
         with st.form("form_manual"):
             col1, col2, col3 = st.columns(3)
@@ -1001,6 +999,7 @@ with tab1:
             out_full, out_view = pipeline.run(df_input)
             st.session_state["last_user_input"]  = df_input.to_dict(orient="records")[0]
             st.session_state["last_model_output"] = out_view.to_dict(orient="records")[0]
+            st.write("Debug last:", st.session_state.get("last_user_input"))
             cols_reason = []
 
             if "id" in out_view.columns:
@@ -1109,20 +1108,20 @@ with tab1:
                 ]
 
                 st.dataframe(show_df[[c for c in cols_show if c in show_df.columns]])
-                st.markdown("### 📤 Gửi yêu cầu cho Admin")
+        st.markdown("### 📤 Gửi yêu cầu cho Admin")
 
-                btn_send = st.button("📮 Gửi yêu cầu duyệt đăng", key="send_request_manual")
+        btn_send = st.button("📮 Gửi yêu cầu duyệt đăng", key="send_request_manual")
 
-                if btn_send:
-                    if "last_user_input" not in st.session_state or "last_model_output" not in st.session_state:
-                        st.error("❗ Bạn cần chạy dự đoán hoặc phát hiện bất thường trước!")
-                    else:
-                        id_sent = push_request_to_admin(
-                            user_data=st.session_state["last_user_input"],
-                            model_data=st.session_state["last_model_output"],
-                            source="manual"
-                        )
-                        st.success(f"✔ Đã gửi yêu cầu thành công! Mã yêu cầu: **{id_sent}**")
+        if btn_send:
+            if "last_user_input" not in st.session_state or "last_model_output" not in st.session_state:
+                st.error("❗ Bạn cần chạy dự đoán hoặc phát hiện bất thường trước!")
+            else:
+                id_sent = push_request_to_admin(
+                    user_data=st.session_state["last_user_input"],
+                    model_data=st.session_state["last_model_output"],
+                    source="manual"
+                )
+                st.success(f"✔ Đã gửi yêu cầu thành công! Mã yêu cầu: **{id_sent}**")
 
 
 
