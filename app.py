@@ -43,10 +43,12 @@ def connect_sheet():
 
     # mở sheet bằng URL
     sheet = client.open_by_url(
-        "https://docs.google.com/spreadsheets/d/1OT-Pjf0W8KP9QthrucmRF8HAtdOyJmn38kZ8WWAAOp4"
+        "https://docs.google.com/spreadsheets/d/1OT-Pjf0W8KP9QthrucmRF8HAtdOyJmn38kZ8WWAAOp4/edit?gid=0#gid=0"
     ).worksheet("Trang tính 1")
 
     return sheet
+sheet = connect_sheet()
+st.write("🟢 KẾT NỐI GOOGLE SHEET THÀNH CÔNG:", sheet.title)
 
 def load_requests():
     sheet = connect_sheet()
@@ -1668,4 +1670,3 @@ if st.session_state.admin_logged_in:
                         update_request(idx, "rejected", note)
                         st.error("❌ Đã từ chối và lưu vào Google Sheet!")
                         st.rerun()
-
