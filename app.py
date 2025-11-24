@@ -1917,20 +1917,23 @@ if st.session_state.admin_logged_in:
                     st.markdown("### 📜 Kết luận & Lý do")
                     model_text = str(req["kết_quả_mô_hình"])
 
+                    gia_du_doan = ""
                     ket_luan = ""
                     ly_do_raw = ""
 
-                    # ---- Tách kết luận ----
                     for ln in model_text.split("\n"):
                         ln = ln.strip()
+
+                        if ln.startswith("Giá_dự_đoán:"):
+                            gia_du_doan = ln.split(":", 1)[1].strip()
+
                         if ln.startswith("Kết_luận:"):
                             ket_luan = ln.split(":", 1)[1].strip()
 
-                    # ---- Tách lý do ----
+                    # --- Lý do ---
                     if "Lý_do:" in model_text:
                         ly_do_raw = model_text.split("Lý_do:", 1)[1].strip()
-                    else:
-                        ly_do_raw = ""
+
 
                     if ket_luan.lower() == "bình thường":
                         st.success(f"✔ **Kết luận:** {ket_luan}")
