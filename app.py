@@ -590,12 +590,17 @@ class PricePipeline:
         scoreB = out["B_score"].to_numpy()   
         out["abnormal_score"] = np.round(self.wA * scoreA + self.wB * scoreB, 2)
 
-        # Kết luận cuối
-        diff_pct = (price - pred) / pred * 100
+        price_safe = pd.to_numeric(price, errors="coerce")
+        pred_safe  = pd.to_numeric(out["Giá_dự_đoán"], errors="coerce")
+
+        if pd.notna(price_safe).all() and pd.notna(pred_safe).all() and (pred_safe > 0).all():
+            diff_pct = (price_safe - pred_safe) / pred_safe * 100
+        else:
+            diff_pct = pd.Series([0] * len(out))
 
         # Điều kiện giá lệch mạnh (ưu tiên cao nhất)
         cond_diff_high  = diff_pct >= 30      
-        cond_diff_low   = diff_pct <= -30    
+        cond_diff_low   = diff_pct <= -30     
 
         # Điều kiện Z-score
         cond_gia_cao  = (Z >= self.Z_ABS_THR)
@@ -604,7 +609,7 @@ class PricePipeline:
         # Giữ lại kiểm tra min/max
         cond_violate = violate.astype(bool)
 
-        #  Ưu tiên: Lệch % ≥ 30% → luôn là bất thường giá
+        # Ưu tiên kết luận
         out["Kết_luận_cuối"] = np.select(
             [
                 cond_diff_high | cond_gia_cao,     
