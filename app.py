@@ -1839,31 +1839,31 @@ if st.session_state.admin_logged_in:
                         st.error(f"Lỗi đọc dữ liệu người dùng: {e}")
                         st.code(req["dữ_liệu_người_dùng"])
                         
-                        st.markdown("### 📜 Lý do đánh giá")
+                    st.markdown("### 📜 Lý do đánh giá")
 
-                        model_text = str(req["kết_quả_mô_hình"])
+                    model_text = str(req["kết_quả_mô_hình"])
 
-                        # Tách kết luận & lý do
-                        text = (
-                            model_text.replace("Kết luận:", "")
-                                    .replace("Lý do:", "")
-                                    .replace("\n", " ")
-                        )
+                    # Tách kết luận & lý do
+                    text = (
+                        model_text.replace("Kết luận:", "")
+                                .replace("Lý do:", "")
+                                .replace("\n", " ")
+                    )
 
-                        # Tách từng lý do
-                        lines = [x.strip(" -•") for x in text.split("•") if x.strip()]
+                    # Tách từng lý do
+                    lines = [x.strip(" -•") for x in text.split("•") if x.strip()]
 
-                        with st.expander("📌 Xem lý do chi tiết"):
-                            for line in lines:
+                    with st.expander("📌 Xem lý do chi tiết"):
+                        for line in lines:
 
-                                # Nếu kết luận là bình thường → không tô đỏ
-                                if "bình thường" in line.lower():
-                                    st.markdown(f"• {line}", unsafe_allow_html=True)
-                                else:
-                                    st.markdown(
-                                        f"<span style='color:#ff4b4b;'>• {line}</span>",
-                                        unsafe_allow_html=True
-                                    )
+                            # Nếu kết luận là bình thường → không tô đỏ
+                            if "bình thường" in line.lower():
+                                st.markdown(f"• {line}", unsafe_allow_html=True)
+                            else:
+                                st.markdown(
+                                    f"<span style='color:#ff4b4b;'>• {line}</span>",
+                                    unsafe_allow_html=True
+                                )
 
 
                     note = st.text_area(
