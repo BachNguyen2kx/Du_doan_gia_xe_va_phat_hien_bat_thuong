@@ -55,34 +55,41 @@ def load_requests():
 
     # Nếu sheet CHỈ có header, chưa có dòng dữ liệu nào
     if not data:
-        cols = [
-            "id_yêu_cầu",
-            "thời_gian",
-            "nguồn",
-            "trạng_thái",
-            "ghi_chú_admin",
-            "dữ_liệu_người_dùng",
-            "kết_quả_mô_hình",
-        ]
-        sheet.append_row(cols)
-        return pd.DataFrame(columns=cols)
+    # Sheet chỉ có header, trả về DataFrame rỗng
+    return pd.DataFrame(columns=[
+        "id_yêu_cầu",
+        "thời_gian",
+        "nguồn",
+        "trạng_thái",
+        "ghi_chú_admin",
+        "dữ_liệu_người_dùng",
+        "kết_quả_mô_hình"
+    ])
 
     return pd.DataFrame(data)
 
 def append_request(req):
     sheet = connect_sheet()
-    values = sheet.get_all_values()  
+    values = sheet.get_all_values()
 
-    if len(values) == 0:  
-        sheet.append_row([
-            "id_yêu_cầu",
-            "thời_gian",
-            "nguồn",
-            "trạng_thái",
-            "ghi_chú_admin",
-            "dữ_liệu_người_dùng",
-            "kết_quả_mô_hình"
-        ])
+    expected_header = [
+        "id_yêu_cầu",
+        "thời_gian",
+        "nguồn",
+        "trạng_thái",
+        "ghi_chú_admin",
+        "dữ_liệu_người_dùng",
+        "kết_quả_mô_hình"
+    ]
+
+    # Nếu sheet trống hoàn toàn → tạo header
+    if len(values) == 0:
+        sheet.append_row(expected_header)
+
+    # Nếu header tồn tại nhưng sai (bị trùng / sai thứ tự / sai chữ)
+    elif values[0] != expected_header:
+        sheet.delete_rows(1)
+        sheet.insert_row(expected_header, index=1)
 
     def pure_python(obj):
         if isinstance(obj, list):
@@ -128,10 +135,24 @@ def append_request(req):
                   .strip()
     )
 
+    pred_val = None
+    if isinstance(model_clean, dict):
+        pred_val = model_clean.get("Giá_dự_đoán", None)
+
+    pred_fmt = f"{int(pred_val):,}" if pred_val is not None else "Không có"
+
     if ket_luan == "Bình thường":
-        model_text = f"Kết luận: {ket_luan}"
+        model_text = (
+            f"Giá_dự_đoán: {pred_fmt}\n"
+            f"Kết luận: {ket_luan}"
+        )
     else:
-        model_text = f"Kết luận: {ket_luan}\nLý do:\n{ly_do_text}"
+        model_text = (
+            f"Giá_dự_đoán: {pred_fmt}\n"
+            f"Kết luận: {ket_luan}\n"
+            f"Lý do:\n{ly_do_text}"
+        )
+
 
 
     try:
