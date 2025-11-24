@@ -50,6 +50,7 @@ def connect_sheet():
 
 def load_requests():
     sheet = connect_sheet()
+    
     data = sheet.get_all_records()
 
     # Nếu sheet CHỈ có header, chưa có dòng dữ liệu nào
@@ -70,6 +71,18 @@ def load_requests():
 
 def append_request(req):
     sheet = connect_sheet()
+    values = sheet.get_all_values()  
+
+    if len(values) == 0:  
+        sheet.append_row([
+            "id_yêu_cầu",
+            "thời_gian",
+            "nguồn",
+            "trạng_thái",
+            "ghi_chú_admin",
+            "dữ_liệu_người_dùng",
+            "kết_quả_mô_hình"
+        ])
 
     def pure_python(obj):
         if isinstance(obj, list):
@@ -1820,31 +1833,28 @@ if st.session_state.admin_logged_in:
 
                     try:
                         raw_user = req["dữ_liệu_người_dùng"]
-
                         lines = [x.strip() for x in raw_user.split("\n") if ":" in x]
 
                         data_dict = {}
                         for ln in lines:
                             key, val = ln.split(":", 1)
                             data_dict[key.strip()] = val.strip()
-
                         df_user = pd.DataFrame([data_dict])
-                        try:
-                            model_text = req["kết_quả_mô_hình"]
-                            lines = model_text.split("\n")
+                        
+                        model_text = str(req["kết_quả_mô_hình"])
+                        gia_du_doan = None
 
-                            gia_du_doan = None
-                            for ln in lines:
-                                if "Giá_dự_đoán" in ln:
-                                    s = ln.split(":")[1].strip().replace(",", "")
-                                    if s.isdigit():
-                                        gia_du_doan = int(s)
+                        for ln in model_text.split("\n"):
+                            if "Giá_dự_đoán" in ln:
+                                # ví dụ "Giá_dự_đoán: 66,000,000"
+                                num = ln.split(":", 1)[1].strip().replace(",", "")
+                                try:
+                                    gia_du_doan = int(float(num))
+                                except:
+                                    pass
 
-                            if gia_du_doan:
-                                df_user["Giá_dự_đoán"] = gia_du_doan
-
-                        except:
-                            pass
+                        if gia_du_doan is not None:
+                            df_user["Giá_dự_đoán"] = gia_du_doan
 
                         # Chuẩn hóa về DataFrame
                         if isinstance(data_dict, dict):
