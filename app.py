@@ -912,217 +912,104 @@ with tab1:
         ["Nhập tay từng xe", "Tải file CSV/XLSX"],
         horizontal=True
     )
-    # =
     # CASE 1: NHẬP TAY
-    # =
     if mode == "Nhập tay từng xe":
         with st.form("form_manual"):
             col1, col2, col3 = st.columns(3)
+
             with col1:
                 thuong_hieu = st.text_input("Thương hiệu", "Honda")
                 dong_xe = st.text_input("Dòng xe", "SH")
-
-                loai_xe = st.selectbox(
-                    "Loại xe",
-                    ["Tay côn/Moto", "Tay ga", "Xe số"],
-                    index=1  # default là Tay ga
-                )
-
-                dung_tich = st.selectbox(
-                    "Dung tích xe",
-                    ["Dưới 50 cc", "50 - 100 cc", "100 - 175 cc", "Trên 175 cc", "Không có"],
-                    index=2  # default "100 - 175 cc"
-                )
+                loai_xe = st.selectbox("Loại xe", ["Tay côn/Moto", "Tay ga", "Xe số"], index=1)
+                dung_tich = st.selectbox("Dung tích xe",
+                                        ["Dưới 50 cc", "50 - 100 cc", "100 - 175 cc", "Trên 175 cc", "Không có"],
+                                        index=2)
 
             with col2:
-                nam = st.number_input("Năm đăng ký", min_value=1990, max_value=2025, value=2020)
-                so_km = st.number_input("Số km đã đi", min_value=0, value=20000, step=1000)
-                gia = st.number_input("Giá thực (VNĐ) – dùng để đánh giá bất thường", min_value=0, step=1_000_000, value=50_000_000)
+                nam = st.number_input("Năm đăng ký", 1990, 2025, 2020)
+                so_km = st.number_input("Số km đã đi", 0, value=20000, step=1000)
+                gia = st.number_input("Giá thực (VNĐ) – dùng để đánh giá bất thường",
+                                    0, step=1_000_000, value=50_000_000)
+
             with col3:
-                gia_min = st.number_input("Khoảng_giá_min (VNĐ) – có thể bỏ trống", min_value=0, step=1_000_000, value=0)
-                gia_max = st.number_input("Khoảng_giá_max (VNĐ) – có thể bỏ trống", min_value=0, step=1_000_000, value=0)
+                gia_min = st.number_input("Khoảng_giá_min (VNĐ) – có thể bỏ trống", 0, step=1_000_000, value=0)
+                gia_max = st.number_input("Khoảng_giá_max (VNĐ) – có thể bỏ trống", 0, step=1_000_000, value=0)
 
             tieude = st.text_input("Tiêu đề tin đăng", "Bán SH Mode 125 chính chủ")
             mota   = st.text_area("Mô tả chi tiết", "Xe đẹp, bao test, biển số TP, giá có thương lượng.")
             diachi = st.text_input("Địa chỉ", "Quận 1, TP. Hồ Chí Minh")
 
-            colb1, colb2 = st.columns(2)
-            with colb1:
-                btn_predict = st.form_submit_button("🔵 Dự đoán giá")
-            with colb2:
-                btn_anom = st.form_submit_button("🔴 Phát hiện bất thường")
-
-        if btn_predict or btn_anom:
-
-                        
-            # Chuẩn hóa dữ liệu input (0 => NaN)
-            min_val = np.nan if gia_min == 0 else gia_min
-            max_val = np.nan if gia_max == 0 else gia_max
-            gia_val = np.nan if gia == 0 else gia
-
-            df_input = pd.DataFrame([{
-                "Thương_hiệu": thuong_hieu,
-                "Dòng_xe": dong_xe,
-                "Loại_xe": loai_xe,
-                "Dung_tích_xe": dung_tich,
-                "Năm_đăng_ký": nam,
-                "Số_Km_đã_đi": so_km,
-                "Giá": gia_val,
-                "Khoảng_giá_min": min_val,
-                "Khoảng_giá_max": max_val,
-                "Tiêu_đề": tieude,
-                "Mô_tả_chi_tiết": mota,
-                "Địa_chỉ": diachi
-            }])
-            
-            # --- ĐỒNG BỘ GIÁ (normalize toàn bộ) ---
-            df_input["Giá"] = df_input["Giá"].apply(normalize_price)
-            df_input["Khoảng_giá_min"] = df_input["Khoảng_giá_min"].apply(normalize_price)
-            df_input["Khoảng_giá_max"] = df_input["Khoảng_giá_max"].apply(normalize_price)
-
-            # --- ĐỒNG BỘ QUẬN (extract từ địa chỉ) ---
-            df_input["Địa_chỉ"] = (
-                df_input["Địa_chỉ"]
-                .astype(str)
-                .str.lower()
-                .str.replace(r"[,.;:()\-_/\\]+", " ", regex=True)   # <--- QUAN TRỌNG
-                .str.replace(r"\s+", " ", regex=True)
-                .str.strip()
-            )
-        
-            
-            for col in ["Thương_hiệu", "Dòng_xe", "Loại_xe", "Dung_tích_xe"]:
-                if col in df_input.columns:
-                    df_input[col] = df_input[col].astype(str).str.lower().str.strip()
-
-            # Chạy pipeline
-            out_full, out_view = pipeline.run(df_input)
-            st.session_state["last_user_input"]  = df_input.to_dict(orient="records")[0]
-            st.session_state["last_model_output"] = out_view.to_dict(orient="records")[0]
-            cols_reason = []
-
-            if "id" in out_view.columns:
-                cols_reason.append("id")
-            else:
-                out_view["id_temp"] = out_view.index
-                cols_reason.append("id_temp")
-
-            cols_reason += ["Kết_luận_cuối", "Loại_bất_thường"]
-
-            df_reason = out_view[cols_reason]
+            # CHỈ 1 SUBMIT TRONG FORM
+            submitted = st.form_submit_button("💾 Lưu thông tin")
 
 
+        if submitted:
+            col_btn1, col_btn2, col_btn3 = st.columns(3)
 
-            # Hiển thị kết quả dự đoán giá
-            gia_du_doan_fmt = f"{int(out_view['Giá_dự_đoán'].iloc[0]):,}"
-            st.markdown(f"### 🔍 Kết quả dự đoán\n**Giá dự đoán:** <span style='font-size:24px;color:#00FFAA;'>{gia_du_doan_fmt} VNĐ</span>", unsafe_allow_html=True)
+            with col_btn1:
+                btn_predict = st.button("🔵 Dự đoán giá", use_container_width=True)
 
-            if btn_predict and not btn_anom:
-                st.markdown("### 📋 Thông tin chi tiết (không chạy phát hiện bất thường)")
+            with col_btn2:
+                btn_anom = st.button("🔴 Phát hiện bất thường", use_container_width=True)
 
-                show_df = out_view.copy()
-                for col in ["Số_Km_đã_đi", "Giá", "Giá_dự_đoán"]:
-                    if col in show_df.columns:
-                        show_df[col] = show_df[col].apply(
-                            lambda x: f"{int(x):,}" if pd.notna(x) else ""
-                        )
-
-                st.dataframe(show_df[[
-                    c for c in ["Thương_hiệu", "Dòng_xe", "Loại_xe", "Năm_đăng_ký",
-                                "Số_Km_đã_đi", "Giá", "Giá_dự_đoán"]
-                    if c in show_df.columns
-                ]])
-
-
-            if btn_anom:
-                # Cảnh báo bất thường
-                st.markdown("### 🚨 Đánh giá bất thường về giá")
-                row = out_view.iloc[0]
-                ket_luan = row.get("Kết_luận_cuối", "Bình thường")
-                reason   = row.get("Loại_bất_thường", "")
-                bflag    = row.get("B_flag", 0)
-                violate  = row.get("vi_pham_minmax", 0)
-
-                if ket_luan == "Bình thường":
-                    st.success("✅ Giá này được hệ thống đánh giá là **BÌNH THƯỜNG** ")
+            with col_btn3:
+                if "manual_result" in st.session_state:
+                    btn_send = st.button("📮 Gửi yêu cầu", use_container_width=True)
                 else:
-                    st.error(f"🚨 Kết luận: **{ket_luan}**")
-                
-                if ket_luan != "Bình thường":
-                    # Lấy lý do thật (HTML → text)
-                    ly_do_html = row.get("Loại_bất_thường", "")
-                    raw = ly_do_html.replace("<br>", "\n").replace("•", "").strip()
-                    ly_do_list = [line.strip().lower() for line in raw.split("\n") if line.strip()]
+                    st.button("📮 Gửi yêu cầu", disabled=True, use_container_width=True)
 
-                    # Lấy % lệch giá
-                    import re
-                    pct = None
-                    for x in ly_do_list:
-                        m = re.search(r"(\d+\.?\d*)%", x)
-                        if m:
-                            pct = m.group(1)
+            # ==========================
+            # KHỐI 2 — XỬ LÝ NÚT
+            # ==========================
+            if btn_predict or btn_anom:
+                min_val = np.nan if gia_min == 0 else gia_min
+                max_val = np.nan if gia_max == 0 else gia_max
+                gia_val = np.nan if gia == 0 else gia
 
-                    # Template + từ khóa match CHUẨN
-                    TEMPLATE = [
-                        ("Giá thực cao hơn giá dự đoán", "cao hơn"),
-                        ("Giá thực thấp hơn giá dự đoán", "thấp hơn"),
-                        ("Giá nằm ngoài khoảng min/max", "min/max"),
-                        ("Tin đăng có đặc điểm khác biệt so với các tin còn lại", "khác biệt"),
-                    ]
+                df_input = pd.DataFrame([{
+                    "Thương_hiệu": thuong_hieu,
+                    "Dòng_xe": dong_xe,
+                    "Loại_xe": loai_xe,
+                    "Dung_tích_xe": dung_tich,
+                    "Năm_đăng_ký": nam,
+                    "Số_Km_đã_đi": so_km,
+                    "Giá": gia_val,
+                    "Khoảng_giá_min": min_val,
+                    "Khoảng_giá_max": max_val,
+                    "Tiêu_đề": tieude,
+                    "Mô_tả_chi_tiết": mota,
+                    "Địa_chỉ": diachi
+                }])
 
-                    with st.expander("📜 Xem lý do"):
-                        for label, key in TEMPLATE:
-                            # logic match chính xác
-                            hit = any(key in x for x in ly_do_list)
+                out_full, out_view = pipeline.run(df_input)
 
-                            # tự động thêm % vào dòng cao/thấp
-                            if hit and pct and ("dự đoán" in label):
-                                label_show = f"{label} {pct}%"
-                            else:
-                                label_show = label
+                st.session_state["manual_result"] = {
+                    "out_view": out_view,
+                    "out_full": out_full,
+                    "df_input": df_input,
+                    "mode": "predict" if btn_predict else "anom"
+                }
 
-                            if hit:
-                                st.markdown(
-                                    f"<span style='color:#ff4b4b;'>• {label_show}</span>",
-                                    unsafe_allow_html=True
-                                )
-                            else:
-                                st.markdown(f"• {label_show}")
-                st.markdown("### 📋 Bảng chi tiết")
+        # ==========================
+        # KHỐI 3 — HIỂN THỊ KẾT QUẢ
+        # ==========================
+        if "manual_result" in st.session_state:
+            res = st.session_state["manual_result"]
+            out_view = res["out_view"]
 
-                # format chỉ vài cột số
-                show_df = out_view.copy()
-                for col in ["Khoảng_giá_min", "Khoảng_giá_max", "Giá", "Giá_dự_đoán"]:
-                    if col in show_df.columns:
-                        show_df[col] = show_df[col].apply(
-                            lambda x: f"{int(x):,}" if pd.notna(x) else ""
-                        )
+            gia_du_doan_fmt = f"{int(out_view['Giá_dự_đoán'].iloc[0]):,}"
+            st.markdown(f"### 🔍 Giá dự đoán: **{gia_du_doan_fmt} VNĐ**")
 
-                # CHỈ HIỆN CÁC CỘT TRONG cols_show
-                cols_show = [
-                    "Thương_hiệu","Dòng_xe","Loại_xe","Dung_tích_xe","Quận",
-                    "Khoảng_giá_min","Khoảng_giá_max",
-                    "Năm_đăng_ký","Tuổi_xe","Số_Km_đã_đi",
-                    "Giá","Giá_dự_đoán","Kết_luận_cuối"
-                ]
+            st.dataframe(out_view)
 
-                st.dataframe(show_df[[c for c in cols_show if c in show_df.columns]])
-                st.markdown("### 📤 Gửi yêu cầu cho Admin")
-
-                send_manual = st.button("📮 Gửi yêu cầu duyệt đăng", key="send_req_manual")
-
-                if send_manual:
-                    if "last_user_input" in st.session_state:
-                        id_sent = push_request_to_admin(
-                            user_data=st.session_state["last_user_input"],
-                            model_data=st.session_state["last_model_output"],
-                            source="manual"
-                        )
-                        st.success(f"✔ Gửi yêu cầu thành công! Mã yêu cầu: {id_sent}")
-                    else:
-                        st.error("Bạn cần chạy dự đoán trước khi gửi yêu cầu!")
-
-
+            # gửi yêu cầu
+            if "btn_send" in locals() and btn_send:
+                req_id = push_request_to_admin(
+                    user_data=res["df_input"].to_dict(orient="records")[0],
+                    model_data=out_view.to_dict(orient="records")[0],
+                    source="manual"
+                )
+                st.success(f"✔ Gửi yêu cầu thành công! ID: {req_id}")
 
 
 
