@@ -1333,11 +1333,22 @@ with tab1:
             if "file_user_input" not in st.session_state or "file_model_output" not in st.session_state:
                 st.error("❗ Bạn cần chạy dự đoán hoặc phát hiện bất thường trước!")
             else:
+                user_list = st.session_state["file_user_input"]
+                user_text = json.dumps(user_list, ensure_ascii=False).replace("\n", " ")
+                model_list = st.session_state["file_model_output"]
+
+                model_text = ""
+                for i, row in enumerate(model_list):
+                    ket = row.get("Kết_luận_cuối", "")
+                    lydo = row.get("Loại_bất_thường", "")
+                    lydo = lydo.replace("<br>", "\n").replace("•", "-").replace("**", "")
+                    model_text += f"[Dòng {i+1}] Kết luận: {ket}\nLý do:\n{lydo}\n\n"
                 id_sent = push_request_to_admin(
-                    user_data=st.session_state["file_user_input"],
-                    model_data=st.session_state["file_model_output"],
+                    user_data=user_text,
+                    model_data=model_text,
                     source="file"
                 )
+
                 st.success(f"✔ Đã gửi dataset thành công! Mã yêu cầu: {id_sent}")
 
 
