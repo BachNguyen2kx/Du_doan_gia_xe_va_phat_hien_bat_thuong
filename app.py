@@ -1212,8 +1212,9 @@ with tab1:
 
             # Chạy pipeline
             out_full, out_view = pipeline.run(df_input)
-            st.session_state["last_user_input"]  = df_input.to_dict(orient="records")
-            st.session_state["last_model_output"] = out_view.to_dict(orient="records")
+            st.session_state["file_user_input"] = df_input.to_dict(orient="records")
+            st.session_state["file_model_output"] = out_view.to_dict(orient="records")
+
             # BẢNG LÝ DO THEO ID
             df_reason = out_view.copy()
 
