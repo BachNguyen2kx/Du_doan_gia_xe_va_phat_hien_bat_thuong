@@ -70,6 +70,7 @@ def load_requests():
 
 def append_request(req):
     sheet = connect_sheet()
+
     def pure_python(obj):
         if isinstance(obj, list):
             return [pure_python(v) for v in obj]
@@ -86,18 +87,27 @@ def append_request(req):
     user_clean  = pure_python(req["user_input"])
     model_clean = pure_python(req["model_output"])
 
-    # ----- Tách kết luận & lý do -----
+    def dict_to_text(d: dict) -> str:
+        lines = []
+        for k, v in d.items():
+            # Format số: 66000000 → 66,000,000
+            if isinstance(v, (int, float)):
+                try:
+                    v = f"{int(v):,}"
+                except:
+                    pass
+            lines.append(f"{k}: {v}")
+        return "\n".join(lines)
+
+    user_text = dict_to_text(user_clean)
+
     if isinstance(model_clean, dict):
         ket_luan = model_clean.get("Kết_luận_cuối", "")
         ly_do_html = model_clean.get("Loại_bất_thường", "")
-
-    # Nếu model_clean là string (CASE 2)
     else:
         ket_luan = ""
         ly_do_html = str(model_clean)
 
-
-    # Chuyển HTML thành text dễ đọc
     ly_do_text = (
         ly_do_html.replace("<br>", "\n")
                   .replace("•", "-")
@@ -105,15 +115,7 @@ def append_request(req):
                   .strip()
     )
 
-    # Chuỗi gọn gàng để ghi vào Sheet
     model_text = f"Kết luận: {ket_luan}\nLý do:\n{ly_do_text}"
-
-    # ----- User JSON chuẩn -----
-    try:
-        user_json = json.dumps(user_clean, ensure_ascii=False).replace("\n", " ").replace("\r", " ")
-    except Exception as e:
-        st.error(f"❌ Lỗi JSON khi chuẩn bị dữ liệu: {e}")
-        return
 
     try:
         sheet.append_row([
@@ -121,15 +123,16 @@ def append_request(req):
             req["thời_gian"],
             req["nguồn"],
             req["trạng_thái"],
-            "",              
-            user_json,       
-            model_text       
+            "",
+            user_text,    
+            model_text
         ])
 
         st.success("📌 Đã gửi yêu cầu lên Google Sheets!")
 
     except Exception as e:
         st.error(f"❌ Google Sheets từ chối ghi dòng: {e}")
+
 
 
 
