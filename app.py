@@ -28,6 +28,7 @@ def connect_sheet():
     # decode base64 → JSON string
     json_str = base64.b64decode(b64).decode("utf-8")
     creds_json = json.loads(json_str)
+    st.write("SERVICE ACCOUNT EMAIL:", creds_json["client_email"])
 
     # tạo credentials
     creds = Credentials.from_service_account_info(
@@ -1618,7 +1619,6 @@ if st.session_state.admin_logged_in:
     with tab_admin:
         st.header("🛠 Trung tâm quản trị")
         reqs = load_requests()
-        st.write("CÁC CỘT TRONG GOOGLE SHEET:", reqs.columns.tolist())
         pending = (reqs["trạng_thái"] == "pending").sum()
         if pending > 0:
             st.warning(f"🔔 Có {pending} yêu cầu mới đang chờ xử lý!")
