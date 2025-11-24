@@ -1915,31 +1915,23 @@ if st.session_state.admin_logged_in:
                         st.code(req["dữ_liệu_người_dùng"])
                         
                     st.markdown("### 📜 Kết luận & Lý do")
-
                     model_text = str(req["kết_quả_mô_hình"])
 
-                    lines = model_text.split("\n")
-
                     ket_luan = ""
-                    gia_du_doan = ""
                     ly_do_raw = ""
 
-                    for ln in lines:
+                    # ---- Tách kết luận ----
+                    for ln in model_text.split("\n"):
                         ln = ln.strip()
-                        if ln.startswith("Giá_dự_đoán"):
-                            gia_du_doan = ln.split(":",1)[1].strip()
+                        if ln.startswith("Kết_luận:"):
+                            ket_luan = ln.split(":", 1)[1].strip()
 
-                        elif ln.startswith("Kết luận"):
-                            ket_luan = ln.split(":",1)[1].strip()
+                    # ---- Tách lý do ----
+                    if "Lý_do:" in model_text:
+                        ly_do_raw = model_text.split("Lý_do:", 1)[1].strip()
+                    else:
+                        ly_do_raw = ""
 
-                        elif ln.startswith("Lý do"):
-                            # Lý do nằm ở dòng sau
-                            idx = lines.index(ln)
-                            ly_do_raw = "\n".join(lines[idx+1:]).strip()
-
-                    # --- DEFAULT FALLBACK ---
-                    if not ket_luan:
-                        ket_luan = "Không xác định"
                     if ket_luan.lower() == "bình thường":
                         st.success(f"✔ **Kết luận:** {ket_luan}")
                     else:
