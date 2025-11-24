@@ -42,7 +42,6 @@ def connect_sheet():
     sheet = sh.sheet1  
     return sheet
 
-sheet = connect_sheet()
 st.write([ws.title for ws in sh.worksheets()])
 
 
@@ -1698,4 +1697,5 @@ if st.session_state.admin_logged_in:
                         update_request(idx, "rejected", note)
                         st.error("❌ Đã từ chối và lưu vào Google Sheet!")
                         st.rerun()
+
 
