@@ -1819,12 +1819,16 @@ if st.session_state.admin_logged_in:
                             "Kết_luận_cuối","Lý_do_ngắn_gọn"
                         ]
 
-                        # Format số có dấu phẩy
                         for col in ["Giá","Giá_dự_đoán","Khoảng_giá_min","Khoảng_giá_max"]:
                             if col in df_user.columns:
                                 df_user[col] = df_user[col].apply(
-                                    lambda x: f"{int(x):,}" if pd.notna(x) else ""
+                                    lambda x: (
+                                        f"{int(float(str(x).replace(',', ''))):,}"
+                                        if str(x).replace(',', '').isdigit()
+                                        else x
+                                    )
                                 )
+
 
                         # Lọc đúng cột có tồn tại
                         df_show = df_user[[c for c in cols_user_show if c in df_user.columns]]
