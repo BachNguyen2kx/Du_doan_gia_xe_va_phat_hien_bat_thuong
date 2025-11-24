@@ -69,7 +69,6 @@ def load_requests():
 
 def append_request(req):
     sheet = connect_sheet()
-
     def pure_python(obj):
         if isinstance(obj, list):
             return [pure_python(v) for v in obj]
@@ -86,16 +85,26 @@ def append_request(req):
     user_clean  = pure_python(req["user_input"])
     model_clean = pure_python(req["model_output"])
 
-    model_short = {
-        "ket_luan": model_clean.get("Kết_luận_cuối", ""),
-        "ly_do": model_clean.get("Loại_bất_thường", "")
-    }
+    # ----- Tách kết luận & lý do -----
+    ket_luan = model_clean.get("Kết_luận_cuối", "")
+    ly_do_html = model_clean.get("Loại_bất_thường", "")
 
+    # Chuyển HTML thành text dễ đọc
+    ly_do_text = (
+        ly_do_html.replace("<br>", "\n")
+                  .replace("•", "-")
+                  .replace("**", "")
+                  .strip()
+    )
+
+    # Chuỗi gọn gàng để ghi vào Sheet
+    model_text = f"Kết luận: {ket_luan}\nLý do:\n{ly_do_text}"
+
+    # ----- User JSON chuẩn -----
     try:
-        user_json  = json.dumps(user_clean, ensure_ascii=False).replace("\n"," ").replace("\r"," ")
-        model_json = json.dumps(model_short, ensure_ascii=False).replace("\n"," ").replace("\r"," ")
+        user_json = json.dumps(user_clean, ensure_ascii=False).replace("\n", " ").replace("\r", " ")
     except Exception as e:
-        st.error(f"❌ Lỗi JSON khi chuẩn bị dữ liệu ghi Sheet: {e}")
+        st.error(f"❌ Lỗi JSON khi chuẩn bị dữ liệu: {e}")
         return
 
     try:
@@ -104,13 +113,12 @@ def append_request(req):
             req["thời_gian"],
             req["nguồn"],
             req["trạng_thái"],
-            "",           
-            user_json,
-            model_json
+            "",              
+            user_json,       
+            model_text       
         ])
 
         st.success("📌 Đã gửi yêu cầu lên Google Sheets!")
-        st.write("📌 Tổng số dòng hiện tại:", sheet.row_count)
 
     except Exception as e:
         st.error(f"❌ Google Sheets từ chối ghi dòng: {e}")
@@ -999,7 +1007,6 @@ with tab1:
             out_full, out_view = pipeline.run(df_input)
             st.session_state["last_user_input"]  = df_input.to_dict(orient="records")[0]
             st.session_state["last_model_output"] = out_view.to_dict(orient="records")[0]
-            st.write("Debug last:", st.session_state.get("last_user_input"))
             cols_reason = []
 
             if "id" in out_view.columns:
