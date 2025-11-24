@@ -67,7 +67,7 @@ def load_requests():
 
     return pd.DataFrame(data)
 
-def append_request(req: dict):
+def append_request(req):
     sheet = connect_sheet()
     sheet.append_row([
         req["id_yêu_cầu"],
@@ -78,7 +78,10 @@ def append_request(req: dict):
         json.dumps(req["user_input"], ensure_ascii=False),
         json.dumps(req["model_output"], ensure_ascii=False)
     ])
+
+    st.write("📌 Đã append. Số dòng hiện tại:", sheet.row_count)
     st.success("📌 Đã gửi yêu cầu lên Google Sheets!")
+
 
 def update_request(row_index, new_status, note):
     sheet = connect_sheet()
