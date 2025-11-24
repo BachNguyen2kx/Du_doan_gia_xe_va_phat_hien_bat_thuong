@@ -22,14 +22,9 @@ from google.oauth2.service_account import Credentials
 
 
 def connect_sheet():
-    # lấy chuỗi base64 trong secrets
     b64 = st.secrets["GOOGLE_CREDS_B64"]
+    creds_json = json.loads(base64.b64decode(b64).decode("utf-8"))
 
-    # decode base64 → JSON string
-    json_str = base64.b64decode(b64).decode("utf-8")
-    creds_json = json.loads(json_str)
-
-    # tạo credentials
     creds = Credentials.from_service_account_info(
         creds_json,
         scopes=[
@@ -40,13 +35,16 @@ def connect_sheet():
 
     client = gspread.authorize(creds)
 
-    # mở sheet bằng URL
-    sheet = client.open_by_url(
-        "https://docs.google.com/spreadsheets/d/1OT-Pjf0W8KP9QthrucmRF8HAtdOyJmn38kZ8WWAAOp4/edit?gid=0#gid=0"
-    ).worksheet("Trang tính 1")
+    sh = client.open_by_url(
+        "https://docs.google.com/spreadsheets/d/1OT-Pjf0W8KP9QthrucmRF8HAtdOyJmn38kZ8WWAAOp4"
+    )
 
+    sheet = sh.sheet1  
     return sheet
+
 sheet = connect_sheet()
+st.write([ws.title for ws in sh.worksheets()])
+
 
 def load_requests():
     sheet = connect_sheet()
