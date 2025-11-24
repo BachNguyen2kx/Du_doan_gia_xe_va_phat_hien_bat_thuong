@@ -39,10 +39,12 @@ def connect_sheet():
         "https://docs.google.com/spreadsheets/d/1OT-Pjf0W8KP9QthrucmRF8HAtdOyJmn38kZ8WWAAOp4"
     )
 
-    sheet = sh.sheet1  
-    return sheet
+    return sh.sheet1, sh
 
+
+sheet, sh = connect_sheet()
 st.write([ws.title for ws in sh.worksheets()])
+
 
 
 def load_requests():
@@ -1697,5 +1699,4 @@ if st.session_state.admin_logged_in:
                         update_request(idx, "rejected", note)
                         st.error("❌ Đã từ chối và lưu vào Google Sheet!")
                         st.rerun()
-
 
