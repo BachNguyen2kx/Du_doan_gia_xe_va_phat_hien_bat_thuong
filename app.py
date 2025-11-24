@@ -1610,9 +1610,9 @@ if st.session_state.admin_logged_in:
 
         st.subheader("📊 Thống kê")
         total = len(reqs)
-        pending   = (reqs["trang_thai"] == "pending").sum()
-        approved  = (reqs["trang_thai"] == "approved").sum()
-        rejected  = (reqs["trang_thai"] == "rejected").sum()
+        pending   = (reqs["trạng_thái"] == "pending").sum()
+        approved  = (reqs["trạng_thái"] == "approved").sum()
+        rejected  = (reqs["trạng_thái"] == "rejected").sum()
 
         c1, c2, c3 = st.columns(3)
         c1.metric("Tổng yêu cầu", total)
@@ -1626,18 +1626,17 @@ if st.session_state.admin_logged_in:
             st.info("Chưa có yêu cầu nào.")
         else:
             for idx, req in reqs.iterrows():
-                with st.expander(f"🔍 {req['thoi_gian']} | {req['id_yeu_cau']} | {req['trang_thai']}"):
+                with st.expander(f"🔍 {req['thời_gian']} | {req['id_yêu_cầu']} | {req['trạng_thái']}"):
                     
                     st.markdown("### 📌 Dữ liệu người dùng")
-                    st.json(json.loads(req["du_lieu_nguoi_dung"]))
+                    st.json(json.loads(req["dữ_liệu_người_dùng"]))
+
 
 
                     st.markdown("### 🤖 Kết quả mô hình")
-                    st.json(json.loads(req["ket_qua_mo_hinh"]))
+                    st.json(json.loads(req["kết_quả_mô_hình"]))
 
-
-                    note = st.text_area("Ghi chú admin", value=req["ghi_chu_admin"], key="note_"+str(req["id_yeu_cau"]))
-
+                    note = st.text_area("Ghi chú admin", value=req["ghi_chú_admin"], key="note_"+str(req["id_yêu_cầu"]))
 
                     colA, colB = st.columns(2)
 
@@ -1651,4 +1650,3 @@ if st.session_state.admin_logged_in:
                         update_request(idx, "rejected", note)
                         st.error("❌ Đã từ chối và lưu vào Google Sheet!")
                         st.rerun()
-
