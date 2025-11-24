@@ -591,16 +591,34 @@ class PricePipeline:
         out["abnormal_score"] = np.round(self.wA * scoreA + self.wB * scoreB, 2)
 
         # Kết luận cuối
+        diff_pct = (price - pred) / pred * 100
+
+        # Điều kiện giá lệch mạnh (ưu tiên cao nhất)
+        cond_diff_high  = diff_pct >= 30      
+        cond_diff_low   = diff_pct <= -30    
+
+        # Điều kiện Z-score
         cond_gia_cao  = (Z >= self.Z_ABS_THR)
         cond_gia_thap = (Z <= -self.Z_ABS_THR)
+
+        # Giữ lại kiểm tra min/max
         cond_violate = violate.astype(bool)
 
-
+        #  Ưu tiên: Lệch % ≥ 30% → luôn là bất thường giá
         out["Kết_luận_cuối"] = np.select(
-            [cond_gia_cao,            cond_gia_thap,            cond_violate],
-            ["Giá cao bất thường",    "Giá thấp bất thường",    "Vi phạm min/max"],
+            [
+                cond_diff_high | cond_gia_cao,     
+                cond_diff_low  | cond_gia_thap,    
+                cond_violate,                      
+            ],
+            [
+                "Giá cao bất thường",
+                "Giá thấp bất thường",
+                "Vi phạm min/max"
+            ],
             default="Bình thường"
         )
+
 
         # HƯỚNG BẤT THƯỜNG (đồng bộ với nhãn)
         out["Hướng_bất_thường"] = out["Kết_luận_cuối"].where(
@@ -1806,6 +1824,22 @@ if st.session_state.admin_logged_in:
                             data_dict[key.strip()] = val.strip()
 
                         df_user = pd.DataFrame([data_dict])
+                        try:
+                            model_text = req["kết_quả_mô_hình"]
+                            lines = model_text.split("\n")
+
+                            gia_du_doan = None
+                            for ln in lines:
+                                if "Giá_dự_đoán" in ln:
+                                    s = ln.split(":")[1].strip().replace(",", "")
+                                    if s.isdigit():
+                                        gia_du_doan = int(s)
+
+                            if gia_du_doan:
+                                df_user["Giá_dự_đoán"] = gia_du_doan
+
+                        except:
+                            pass
 
                         # Chuẩn hóa về DataFrame
                         if isinstance(data_dict, dict):
