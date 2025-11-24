@@ -19,6 +19,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import base64
 from google.oauth2.service_account import Credentials
+from datetime import datetime, timezone, timedelta
 
 
 def connect_sheet():
@@ -137,10 +138,12 @@ def update_request(row_index, new_status, note):
     sheet.update_cell(row_index + 2, 4, new_status)
     sheet.update_cell(row_index + 2, 5, note)
 
+vn_tz = timezone(timedelta(hours=7))
+
 def push_request_to_admin(user_data, model_data, source="manual"):
     req = {
         "id_yêu_cầu": str(uuid.uuid4()),
-        "thời_gian": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "thời_gian": datetime.now(vn_tz).strftime("%Y-%m-%d %H:%M:%S"),
         "nguồn": source,
         "trạng_thái": "pending",
         "user_input": user_data,
@@ -1776,17 +1779,19 @@ if st.session_state.admin_logged_in:
                 st.success("Không có yêu cầu pending nào.")
 
             st.markdown("---")
-            st.subheader("🔍 Chi tiết từng yêu cầu ( chỉ Pending )")
+            st.subheader("🔍 Chi tiết từng yêu cầu ( Chờ duyệt )")
 
             # ====== EXPAND CHI TIẾT CHỈ CHO PENDING ======
             for idx, req in pending_df.iterrows():
                 with st.expander(f"🔍 {req['thời_gian']} | {req['id_yêu_cầu']} | {req['trạng_thái']}"):
 
                     st.markdown("### 📌 Dữ liệu người dùng")
+
                     try:
                         raw_user = req["dữ_liệu_người_dùng"]
                         user_obj = json.loads(raw_user) if isinstance(raw_user, str) else raw_user
 
+                        # Chuẩn hóa về DataFrame
                         if isinstance(user_obj, dict):
                             df_user = pd.DataFrame([user_obj])
                         elif isinstance(user_obj, list):
@@ -1794,25 +1799,50 @@ if st.session_state.admin_logged_in:
                         else:
                             df_user = pd.DataFrame([{"data": user_obj}])
 
-                        st.dataframe(df_user, use_container_width=True)
+                        # Các cột cần hiển thị
+                        cols_user_show = [
+                            "Thương_hiệu","Dòng_xe","Loại_xe","Dung_tích_xe","Quận",
+                            "Giá","Giá_dự_đoán",
+                            "Khoảng_giá_min","Khoảng_giá_max",
+                            "Kết_luận_cuối","Lý_do_ngắn_gọn"
+                        ]
+
+                        # Format số có dấu phẩy
+                        for col in ["Giá","Giá_dự_đoán","Khoảng_giá_min","Khoảng_giá_max"]:
+                            if col in df_user.columns:
+                                df_user[col] = df_user[col].apply(
+                                    lambda x: f"{int(x):,}" if pd.notna(x) else ""
+                                )
+
+                        # Lọc đúng cột có tồn tại
+                        df_show = df_user[[c for c in cols_user_show if c in df_user.columns]]
+
+                        st.dataframe(df_show, use_container_width=True)
+
                     except Exception as e:
                         st.error(f"Lỗi đọc dữ liệu người dùng: {e}")
                         st.code(req["dữ_liệu_người_dùng"])
+                        
+                        st.markdown("### 📜 Lý do đánh giá")
 
-                    st.markdown("### 🤖 Kết quả mô hình")
+                        model_text = str(req["kết_quả_mô_hình"])
 
-                    model_text = req["kết_quả_mô_hình"]
-                    rows = []
-                    # mỗi request mới chỉ có 1 block "Kết luận: ...\nLý do: ..."
-                    for block in str(model_text).strip().split("\n\n"):
-                        if "Kết luận" in block:
-                            lines = block.split("\n")
-                            ket = lines[0].replace("Kết luận:", "").strip()
-                            lydo = " ".join(lines[1:]).replace("Lý do:", "").strip()
-                            rows.append({"Kết_luận": ket, "Lý_do": lydo})
+                        # Tách kết luận & lý do
+                        text = (
+                            model_text.replace("Kết luận:", "")
+                                    .replace("Lý do:", "")
+                                    .replace("\n", " ")
+                        )
 
-                    df_model = pd.DataFrame(rows)
-                    st.dataframe(df_model, use_container_width=True)
+                        # Tách từng lý do
+                        lines = [x.strip(" -•") for x in text.split("•") if x.strip()]
+
+                        with st.expander("📌 Xem lý do chi tiết"):
+                            for line in lines:
+                                st.markdown(
+                                    f"<span style='color:#ff4b4b;'>• {line}</span>",
+                                    unsafe_allow_html=True
+                                )
 
                     note = st.text_area(
                         "Ghi chú admin",
