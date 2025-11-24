@@ -143,15 +143,16 @@ def append_request(req):
 
     if ket_luan == "Bình thường":
         model_text = (
-            f"Giá_dự_đoán: {pred_fmt}\n"
-            f"Kết luận: {ket_luan}"
+            f"Giá_dự_đoán: {pred_fmt}\n"        
+            f"Kết_luận: {ket_luan}"            
         )
     else:
         model_text = (
-            f"Giá_dự_đoán: {pred_fmt}\n"
-            f"Kết luận: {ket_luan}\n"
-            f"Lý do:\n{ly_do_text}"
+            f"Giá_dự_đoán: {pred_fmt}\n"        
+            f"Kết_luận: {ket_luan}\n"           
+            f"Lý_do:\n{ly_do_text}"            
         )
+
 
 
 
