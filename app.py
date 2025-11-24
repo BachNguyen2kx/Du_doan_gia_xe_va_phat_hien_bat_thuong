@@ -1918,52 +1918,36 @@ if st.session_state.admin_logged_in:
 
                     model_text = str(req["kết_quả_mô_hình"])
 
-                    ket_luan = ""
-                    ly_do_raw = ""
-
-                    model_text = str(req["kết_quả_mô_hình"])
-
-                    gia_du_doan = None
-                    ket_luan = ""
-                    ly_do_raw = ""
-
-                    # Tách từng dòng
                     lines = model_text.split("\n")
 
+                    ket_luan = ""
+                    gia_du_doan = ""
+                    ly_do_raw = ""
+
                     for ln in lines:
-                        line = ln.strip()
+                        ln = ln.strip()
+                        if ln.startswith("Giá_dự_đoán"):
+                            gia_du_doan = ln.split(":",1)[1].strip()
 
-                        # 1) Tìm Giá dự đoán
-                        if line.startswith("Giá_dự_đoán:"):
-                            val = line.split(":", 1)[1].strip().replace(",", "")
-                            try:
-                                gia_du_doan = int(float(val))
-                            except:
-                                pass
+                        elif ln.startswith("Kết luận"):
+                            ket_luan = ln.split(":",1)[1].strip()
 
-                        # 2) Tìm Kết luận
-                        elif line.startswith("Kết luận:"):
-                            ket_luan = line.replace("Kết luận:", "").strip()
+                        elif ln.startswith("Lý do"):
+                            # Lý do nằm ở dòng sau
+                            idx = lines.index(ln)
+                            ly_do_raw = "\n".join(lines[idx+1:]).strip()
 
-                        # 3) Tìm Lý do (nằm dưới dạng text)
-                        elif line.startswith("Lý do:") or line.startswith("Lý do"):
-                            # ghép tất cả dòng phía sau
-                            ly_do_raw = "\n".join(lines[lines.index(ln)+1:]).strip()
-                            break
-
-                    # --- XỬ LÝ MÀU & HIỂN THỊ ---
-                    # Hiện giá dự đoán trước (màu xanh)
-                    if gia_du_doan is not None:
-                        st.success(f"💰 Giá dự đoán: {gia_du_doan:,} VNĐ")
-
-                    # Hiện kết luận (xanh nếu bình thường, đỏ nếu bất thường)
+                    # --- DEFAULT FALLBACK ---
+                    if not ket_luan:
+                        ket_luan = "Không xác định"
                     if ket_luan.lower() == "bình thường":
-                        st.success(f"✔ Kết luận: {ket_luan}")
+                        st.success(f"✔ **Kết luận:** {ket_luan}")
                     else:
-                        st.error(f"🚨 Kết luận: {ket_luan}")
+                        st.error(f"🚨 **Kết luận:** {ket_luan}")
 
-                    # Lý do
-                    if ket_luan.lower() != "bình thường":
+                    if ket_luan.lower() == "bình thường":
+                        st.info("✔ Không có lý do chi tiết vì tin này là *bình thường*.")
+                    else:
                         ly_do_lines = [
                             ln.strip(" -•") for ln in ly_do_raw.replace("<br>", "\n").split("\n")
                             if ln.strip()
@@ -1971,8 +1955,6 @@ if st.session_state.admin_logged_in:
                         with st.expander("📌 Xem lý do chi tiết"):
                             for ln in ly_do_lines:
                                 st.markdown(f"<span style='color:#ff4b4b;'>• {ln}</span>", unsafe_allow_html=True)
-                    else:
-                        st.info("✔ Không có lý do chi tiết vì tin này là bình thường.")
 
 
                     note = st.text_area(
