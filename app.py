@@ -43,10 +43,6 @@ def connect_sheet():
 
 
 sheet, sh = connect_sheet()
-st.write([ws.title for ws in sh.worksheets()])
-
-
-
 def load_requests():
     sheet = connect_sheet()
     data = sheet.get_all_records()
