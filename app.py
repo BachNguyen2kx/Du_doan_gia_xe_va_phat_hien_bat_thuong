@@ -634,8 +634,8 @@ class PricePipeline:
             diff_pct = pd.Series([0] * len(out))
 
         # Điều kiện giá lệch mạnh (ưu tiên cao nhất)
-        cond_diff_high  = diff_pct >= 30      
-        cond_diff_low   = diff_pct <= -30     
+        cond_diff_high  = diff_pct >= 40      
+        cond_diff_low   = diff_pct <= -40     
 
         # Điều kiện Z-score
         cond_gia_cao  = (Z >= self.Z_ABS_THR)
@@ -1080,8 +1080,8 @@ with tab1:
 
             # Chạy pipeline
             out_full, out_view = pipeline.run(df_input)
-            st.session_state["file_user_input"]  = df_input.to_dict(orient="records")
-            st.session_state["file_model_output"] = out_view.to_dict(orient="records")
+            st.session_state["last_user_input"] = df_input.to_dict(orient="records")[0]
+            st.session_state["last_model_output"] = out_view.to_dict(orient="records")[0]
             cols_reason = []
 
             if "id" in out_view.columns:
