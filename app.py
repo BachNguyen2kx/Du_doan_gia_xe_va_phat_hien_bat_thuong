@@ -1790,16 +1790,16 @@ if st.session_state.admin_logged_in:
                     st.markdown("### 📌 Dữ liệu người dùng")
 
                     try:
+                        raw_user = req["dữ_liệu_người_dùng"]
+                        user_obj = json.loads(raw_user) if isinstance(raw_user, str) else raw_user
 
-                        raw_user = str(req["dữ_liệu_người_dùng"])
-                        rows = []
-                        for line in raw_user.split("\n"):
-                            if ":" in line:
-                                k, v = line.split(":", 1)
-                                rows.append({"Thuộc tính": k.strip(), "Giá trị": v.strip()})
-
-                        df_user = pd.DataFrame(rows)
-                        st.dataframe(df_user, use_container_width=True)
+                        # Chuẩn hóa về DataFrame
+                        if isinstance(user_obj, dict):
+                            df_user = pd.DataFrame([user_obj])
+                        elif isinstance(user_obj, list):
+                            df_user = pd.DataFrame(user_obj)
+                        else:
+                            df_user = pd.DataFrame([{"data": user_obj}])
 
                         # Các cột cần hiển thị
                         cols_user_show = [
