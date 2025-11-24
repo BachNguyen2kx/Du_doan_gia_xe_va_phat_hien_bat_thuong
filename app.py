@@ -1093,22 +1093,24 @@ with tab1:
 
                     with st.expander("📜 Xem lý do"):
                         for label, key in TEMPLATE:
-                            # logic match chính xác
                             hit = any(key in x for x in ly_do_list)
 
-                            # tự động thêm % vào dòng cao/thấp
+                            # Tự động thêm % nếu có
                             if hit and pct and ("dự đoán" in label):
                                 label_show = f"{label} {pct}%"
                             else:
                                 label_show = label
 
+                            # 🔥 Nếu bất thường → đỏ, nếu bình thường → màu mặc định
                             if hit:
-                                st.markdown(
-                                    f"<span style='color:#ff4b4b;'>• {label_show}</span>",
-                                    unsafe_allow_html=True
-                                )
+                                color = "#ff4b4b"   # đỏ cho bất thường
                             else:
-                                st.markdown(f"• {label_show}")
+                                color = "#00cc66" if ket_luan == "Bình thường" else "#ccc"  # xanh cho bình thường
+
+                            st.markdown(
+                                f"<span style='color:{color};'>• {label_show}</span>",
+                                unsafe_allow_html=True
+                            )
                 st.markdown("### 📋 Bảng chi tiết")
 
                 # format chỉ vài cột số
@@ -1791,7 +1793,15 @@ if st.session_state.admin_logged_in:
 
                     try:
                         raw_user = req["dữ_liệu_người_dùng"]
-                        user_obj = json.loads(raw_user) if isinstance(raw_user, str) else raw_user
+
+                        lines = [x.strip() for x in raw_user.split("\n") if ":" in x]
+
+                        data_dict = {}
+                        for ln in lines:
+                            key, val = ln.split(":", 1)
+                            data_dict[key.strip()] = val.strip()
+
+                        df_user = pd.DataFrame([data_dict])
 
                         # Chuẩn hóa về DataFrame
                         if isinstance(user_obj, dict):
