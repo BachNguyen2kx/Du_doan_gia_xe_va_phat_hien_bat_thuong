@@ -1804,12 +1804,12 @@ if st.session_state.admin_logged_in:
                         df_user = pd.DataFrame([data_dict])
 
                         # Chuẩn hóa về DataFrame
-                        if isinstance(user_obj, dict):
-                            df_user = pd.DataFrame([user_obj])
-                        elif isinstance(user_obj, list):
-                            df_user = pd.DataFrame(user_obj)
+                        if isinstance(data_dict, dict):
+                            df_user = pd.DataFrame([data_dict])
+                        elif isinstance(data_dict, list):
+                            df_user = pd.DataFrame(data_dict)
                         else:
-                            df_user = pd.DataFrame([{"data": user_obj}])
+                            df_user = pd.DataFrame([{"data": data_dict}])
 
                         # Các cột cần hiển thị
                         cols_user_show = [
@@ -1851,10 +1851,16 @@ if st.session_state.admin_logged_in:
 
                         with st.expander("📌 Xem lý do chi tiết"):
                             for line in lines:
-                                st.markdown(
-                                    f"<span style='color:#ff4b4b;'>• {line}</span>",
-                                    unsafe_allow_html=True
-                                )
+
+                                # Nếu kết luận là bình thường → không tô đỏ
+                                if "bình thường" in line.lower():
+                                    st.markdown(f"• {line}", unsafe_allow_html=True)
+                                else:
+                                    st.markdown(
+                                        f"<span style='color:#ff4b4b;'>• {line}</span>",
+                                        unsafe_allow_html=True
+                                    )
+
 
                     note = st.text_area(
                         "Ghi chú admin",
