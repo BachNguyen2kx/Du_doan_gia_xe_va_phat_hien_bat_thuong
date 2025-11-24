@@ -22,9 +22,14 @@ from google.oauth2.service_account import Credentials
 
 
 def connect_sheet():
+    # lấy chuỗi base64 trong secrets
     b64 = st.secrets["GOOGLE_CREDS_B64"]
-    creds_json = json.loads(base64.b64decode(b64).decode("utf-8"))
 
+    # decode base64 → JSON string
+    json_str = base64.b64decode(b64).decode("utf-8")
+    creds_json = json.loads(json_str)
+
+    # tạo credentials
     creds = Credentials.from_service_account_info(
         creds_json,
         scopes=[
@@ -32,13 +37,15 @@ def connect_sheet():
             "https://www.googleapis.com/auth/drive"
         ]
     )
+
     client = gspread.authorize(creds)
 
-    sh = client.open_by_url(
-        "https://docs.google.com/spreadsheets/d/1OT-Pjf0W8KP9QthrucmRF8HAtdOyJmn38kZ8WWAAOp4"
-    )
+    # mở sheet bằng URL
+    sheet = client.open_by_url(
+        "https://docs.google.com/spreadsheets/d/1OT-Pjf0W8KP9QthrucmRF8HAtdOyJmn38kZ8WWAAOp4/edit?gid=0#gid=0"
+    ).worksheet("Trang tính 1")
 
-    return sh.sheet1 
+    return sheet
 
 def load_requests():
     sheet = connect_sheet()
@@ -55,6 +62,7 @@ def load_requests():
             "dữ_liệu_người_dùng",
             "kết_quả_mô_hình",
         ]
+        sheet.append_row(cols)
         return pd.DataFrame(columns=cols)
 
     return pd.DataFrame(data)
@@ -1101,7 +1109,9 @@ with tab1:
                 st.dataframe(show_df[[c for c in cols_show if c in show_df.columns]])
                 st.markdown("### 📤 Gửi yêu cầu cho Admin")
 
-                if st.button("📮 Gửi yêu cầu duyệt đăng", key="send_req_manual"):
+                send_manual = st.button("📮 Gửi yêu cầu duyệt đăng", key="send_req_manual")
+
+                if send_manual:
                     if "last_user_input" in st.session_state:
                         id_sent = push_request_to_admin(
                             user_data=st.session_state["last_user_input"],
@@ -1110,7 +1120,8 @@ with tab1:
                         )
                         st.success(f"✔ Gửi yêu cầu thành công! Mã yêu cầu: {id_sent}")
                     else:
-                        st.error("⚠ Bạn cần chạy dự đoán trước khi gửi yêu cầu!")
+                        st.error("Bạn cần chạy dự đoán trước khi gửi yêu cầu!")
+
 
 
 
@@ -1692,5 +1703,4 @@ if st.session_state.admin_logged_in:
                         update_request(idx, "rejected", note)
                         st.error("❌ Đã từ chối và lưu vào Google Sheet!")
                         st.rerun()
-
 
