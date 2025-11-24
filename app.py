@@ -1291,29 +1291,7 @@ with tab1:
                             lambda x: f"{int(x):,}" if pd.notna(x) else ""
                         )
                 st.markdown("### 📤 Gửi danh sách bất thường cho Admin")
-                if st.button("📮 Gửi dữ liệu file cho Admin"):
-                    # 1) Chuẩn hóa phần user_data (list of dict → 1 dòng gọn)
-                    user_list = df_input.to_dict(orient="records")
-                    user_text = json.dumps(user_list, ensure_ascii=False).replace("\n", " ")
-
-                    # 2) Chuẩn hóa phần model_data (với từng dòng)
-                    model_list = out_view.to_dict(orient="records")
-
-                    model_text = ""
-                    for i, row in enumerate(model_list):
-                        ket = row.get("Kết_luận_cuối", "")
-                        lydo = row.get("Loại_bất_thường", "")
-                        lydo = lydo.replace("<br>", "\n").replace("•", "-").replace("**", "")
-                        model_text += f"[Dòng {i+1}] Kết luận: {ket}\nLý do:\n{lydo}\n\n"
-
-                    # 3) Gửi vào sheet
-                    id_sent = push_request_to_admin(
-                        user_data=user_text,
-                        model_data=model_text,
-                        source="file"
-                    )
-                    st.success(f"✔ Đã gửi yêu cầu thành công! (ID: {id_sent})")
-
+        
                 # Các dòng bất thường
                 df_abn  = out_view[out_view["Kết_luận_cuối"] != "Bình thường"].copy()
                 df_norm = out_view[out_view["Kết_luận_cuối"] == "Bình thường"].copy()
@@ -1346,6 +1324,34 @@ with tab1:
                     ],
                     use_container_width=True
                 )
+        st.markdown("### 📤 Gửi toàn bộ dữ liệu cho Admin")
+
+        btn_send_file = st.button("📮 Gửi dữ liệu file cho Admin", key="send_request_file")
+
+        if btn_send_file:
+
+            # 1) User_data = list → text gọn
+            user_list = df_input.to_dict(orient="records")
+            user_text = json.dumps(user_list, ensure_ascii=False).replace("\n", " ")
+
+            # 2) Model_data = format đẹp
+            model_list = out_view.to_dict(orient="records")
+
+            model_text = ""
+            for i, row in enumerate(model_list):
+                ket = row.get("Kết_luận_cuối", "")
+                lydo = row.get("Loại_bất_thường", "")
+                lydo = lydo.replace("<br>", "\n").replace("•", "-").replace("**", "")
+                model_text += f"[Dòng {i+1}] Kết luận: {ket}\nLý do:\n{lydo}\n\n"
+
+            # 3) Gửi sheet
+            id_sent = push_request_to_admin(
+                user_data=user_text,
+                model_data=model_text,
+                source="file"
+            )
+
+            st.success(f"✔ Đã gửi dataset thành công! Mã yêu cầu: {id_sent}")
 
                     
 # 2 TRANG GIỚI THIỆU
