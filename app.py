@@ -70,7 +70,6 @@ def load_requests():
 def append_request(req):
     sheet = connect_sheet()
 
-    # --- CHUYỂN TOÀN BỘ DỮ LIỆU THÀNH PYTHON THUẦN (không numpy) ---
     def pure_python(obj):
         if isinstance(obj, list):
             return [pure_python(v) for v in obj]
@@ -84,16 +83,19 @@ def append_request(req):
             return None
         return obj
 
-    # Dữ liệu đưa vào JSON phải ở dạng Python thuần
-    user_data_clean  = pure_python(req["user_input"])
-    model_data_clean = pure_python(req["model_output"])
+    user_clean  = pure_python(req["user_input"])
+    model_clean = pure_python(req["model_output"])
 
-    # Tạo JSON sạch
+    model_short = {
+        "ket_luan": model_clean.get("Kết_luận_cuối", ""),
+        "ly_do": model_clean.get("Loại_bất_thường", "")
+    }
+
     try:
-        user_json  = json.dumps(user_data_clean, ensure_ascii=False)
-        model_json = json.dumps(model_data_clean, ensure_ascii=False)
+        user_json  = json.dumps(user_clean, ensure_ascii=False).replace("\n"," ").replace("\r"," ")
+        model_json = json.dumps(model_short, ensure_ascii=False).replace("\n"," ").replace("\r"," ")
     except Exception as e:
-        st.error(f"❌ Lỗi JSON khi chuẩn bị ghi Google Sheet: {e}")
+        st.error(f"❌ Lỗi JSON khi chuẩn bị dữ liệu ghi Sheet: {e}")
         return
 
     try:
@@ -102,7 +104,7 @@ def append_request(req):
             req["thời_gian"],
             req["nguồn"],
             req["trạng_thái"],
-            "",            
+            "",           
             user_json,
             model_json
         ])
@@ -111,7 +113,7 @@ def append_request(req):
         st.write("📌 Tổng số dòng hiện tại:", sheet.row_count)
 
     except Exception as e:
-        st.error(f"❌ Google Sheets từ chối ghi dữ liệu: {e}")
+        st.error(f"❌ Google Sheets từ chối ghi dòng: {e}")
 
 
 
