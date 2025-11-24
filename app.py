@@ -32,17 +32,14 @@ def connect_sheet():
             "https://www.googleapis.com/auth/drive"
         ]
     )
-
     client = gspread.authorize(creds)
 
     sh = client.open_by_url(
         "https://docs.google.com/spreadsheets/d/1OT-Pjf0W8KP9QthrucmRF8HAtdOyJmn38kZ8WWAAOp4"
     )
 
-    return sh.sheet1, sh
+    return sh.sheet1 
 
-
-sheet, sh = connect_sheet()
 def load_requests():
     sheet = connect_sheet()
     data = sheet.get_all_records()
@@ -1695,4 +1692,5 @@ if st.session_state.admin_logged_in:
                         update_request(idx, "rejected", note)
                         st.error("❌ Đã từ chối và lưu vào Google Sheet!")
                         st.rerun()
+
 
