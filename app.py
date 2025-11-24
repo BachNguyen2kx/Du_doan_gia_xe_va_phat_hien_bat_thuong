@@ -915,7 +915,20 @@ with tab1:
     # CASE 1: NHẬP TAY
     if mode == "Nhập tay từng xe":
         with st.form("form_manual"):
-            col1, col2, col3 = st.columns(3)
+            colP1, colP2, colP3 = st.columns([1,1,1])
+
+            with colP1:
+                btn_predict = st.button("🔵 Dự đoán giá", key="btn_predict_manual")
+
+            with colP2:
+                btn_anom = st.button("🔴 Phát hiện bất thường", key="btn_anom_manual")
+
+            with colP3:
+                btn_send = st.button(
+                    "📮 Gửi yêu cầu duyệt đăng",
+                    key="btn_send_manual",
+                    disabled=not st.session_state.get("anom_done", False)
+                )
 
             with col1:
                 thuong_hieu = st.text_input("Thương hiệu", "Honda")
@@ -958,41 +971,43 @@ with tab1:
                 else:
                     st.button("📮 Gửi yêu cầu", disabled=True, use_container_width=True)
 
-            # ==========================
-            # KHỐI 2 — XỬ LÝ NÚT
-            # ==========================
-            if btn_predict or btn_anom:
-                min_val = np.nan if gia_min == 0 else gia_min
-                max_val = np.nan if gia_max == 0 else gia_max
-                gia_val = np.nan if gia == 0 else gia
+        # KHỐI 2 — XỬ LÝ NÚT
+        if btn_predict or btn_anom:
+            # Chuẩn hóa dữ liệu input
+            min_val = np.nan if gia_min == 0 else gia_min
+            max_val = np.nan if gia_max == 0 else gia_max
+            gia_val = np.nan if gia == 0 else gia
 
-                df_input = pd.DataFrame([{
-                    "Thương_hiệu": thuong_hieu,
-                    "Dòng_xe": dong_xe,
-                    "Loại_xe": loai_xe,
-                    "Dung_tích_xe": dung_tich,
-                    "Năm_đăng_ký": nam,
-                    "Số_Km_đã_đi": so_km,
-                    "Giá": gia_val,
-                    "Khoảng_giá_min": min_val,
-                    "Khoảng_giá_max": max_val,
-                    "Tiêu_đề": tieude,
-                    "Mô_tả_chi_tiết": mota,
-                    "Địa_chỉ": diachi
-                }])
+            df_input = pd.DataFrame([{
+                "Thương_hiệu": thuong_hieu,
+                "Dòng_xe": dong_xe,
+                "Loại_xe": loai_xe,
+                "Dung_tích_xe": dung_tich,
+                "Năm_đăng_ký": nam,
+                "Số_Km_đã_đi": so_km,
+                "Giá": gia_val,
+                "Khoảng_giá_min": min_val,
+                "Khoảng_giá_max": max_val,
+                "Tiêu_đề": tieude,
+                "Mô_tả_chi_tiết": mota,
+                "Địa_chỉ": diachi
+            }])
 
-                out_full, out_view = pipeline.run(df_input)
+            # đồng bộ giá
+            df_input["Giá"] = df_input["Giá"].apply(normalize_price)
+            df_input["Khoảng_giá_min"] = df_input["Khoảng_giá_min"].apply(normalize_price)
+            df_input["Khoảng_giá_max"] = df_input["Khoảng_giá_max"].apply(normalize_price)
 
-                st.session_state["manual_result"] = {
-                    "out_view": out_view,
-                    "out_full": out_full,
-                    "df_input": df_input,
-                    "mode": "predict" if btn_predict else "anom"
-                }
+            # chạy pipeline
+            out_full, out_view = pipeline.run(df_input)
 
-        # ==========================
+            # lưu kết quả để gửi admin
+            st.session_state["last_user_input"]  = df_input.to_dict(orient="records")[0]
+            st.session_state["last_model_output"] = out_view.to_dict(orient="records")[0]
+
+            # đánh dấu đã chạy bất thường
+            st.session_state["anom_done"] = bool(btn_anom)
         # KHỐI 3 — HIỂN THỊ KẾT QUẢ
-        # ==========================
         if "manual_result" in st.session_state:
             res = st.session_state["manual_result"]
             out_view = res["out_view"]
