@@ -1660,13 +1660,13 @@ if st.session_state.admin_logged_in:
 
                     colA, colB = st.columns(2)
 
-                    if colA.button("✔ Duyệt", key="ap_"+str(req["id_yeu_cau"])):
+                    if colA.button("✔ Duyệt", key="ap_"+str(req["id_yêu_cầu"])):
                         update_request(idx, "approved", note)
                         st.success("✔ Đã duyệt và lưu vào Google Sheet!")
                         st.rerun()
 
-
-                    if colB.button("❌ Từ chối", key="rej_"+str(req["id_yeu_cau"])):
+                    if colB.button("❌ Từ chối", key="rej_"+str(req["id_yêu_cầu"])):
                         update_request(idx, "rejected", note)
                         st.error("❌ Đã từ chối và lưu vào Google Sheet!")
                         st.rerun()
+
