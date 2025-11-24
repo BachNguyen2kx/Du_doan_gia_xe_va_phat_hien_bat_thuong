@@ -56,15 +56,15 @@ def load_requests():
     # Nếu sheet CHỈ có header, chưa có dòng dữ liệu nào
     if not data:
     # Sheet chỉ có header, trả về DataFrame rỗng
-    return pd.DataFrame(columns=[
-        "id_yêu_cầu",
-        "thời_gian",
-        "nguồn",
-        "trạng_thái",
-        "ghi_chú_admin",
-        "dữ_liệu_người_dùng",
-        "kết_quả_mô_hình"
-    ])
+        return pd.DataFrame(columns=[
+            "id_yêu_cầu",
+            "thời_gian",
+            "nguồn",
+            "trạng_thái",
+            "ghi_chú_admin",
+            "dữ_liệu_người_dùng",
+            "kết_quả_mô_hình"
+        ])
 
     return pd.DataFrame(data)
 
