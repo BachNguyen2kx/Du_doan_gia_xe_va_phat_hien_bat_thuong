@@ -1934,7 +1934,7 @@ if st.session_state.admin_logged_in:
                         ly_do_raw = model_text.split("Lý_do:", 1)[1].strip()
 
                     if gia_du_doan:
-                        st.info(f"💰 **Giá dự đoán:** {gia_du_doan}")
+                        st.info(f"💰 **Giá dự đoán:** {gia_du_doan} VND")
                     if ket_luan.lower() == "bình thường":
                         st.success(f"✔ **Kết luận:** {ket_luan}")
                     else:
