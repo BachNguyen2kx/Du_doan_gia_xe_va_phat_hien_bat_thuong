@@ -43,13 +43,27 @@ def connect_sheet():
     # mở sheet bằng URL
     sheet = client.open_by_url(
         "https://docs.google.com/spreadsheets/d/1OT-Pjf0W8KP9QthrucmRF8HAtdOyJmn38kZ8WWAAOp4/edit?gid=0#gid=0"
-    ).sheet1
+    ).worksheet("Trang tính 1")
 
     return sheet
 
 def load_requests():
     sheet = connect_sheet()
     data = sheet.get_all_records()
+
+    # Nếu sheet CHỈ có header, chưa có dòng dữ liệu nào
+    if not data:
+        cols = [
+            "id_yêu_cầu",
+            "thời_gian",
+            "nguồn",
+            "trạng_thái",
+            "ghi_chú_admin",
+            "dữ_liệu_người_dùng",
+            "kết_quả_mô_hình",
+        ]
+        return pd.DataFrame(columns=cols)
+
     return pd.DataFrame(data)
 
 def append_request(req: dict):
