@@ -28,7 +28,6 @@ def connect_sheet():
     # decode base64 → JSON string
     json_str = base64.b64decode(b64).decode("utf-8")
     creds_json = json.loads(json_str)
-    st.write("SERVICE ACCOUNT EMAIL:", creds_json["client_email"])
 
     # tạo credentials
     creds = Credentials.from_service_account_info(
@@ -48,7 +47,6 @@ def connect_sheet():
 
     return sheet
 sheet = connect_sheet()
-st.write("🟢 KẾT NỐI GOOGLE SHEET THÀNH CÔNG:", sheet.title)
 
 def load_requests():
     sheet = connect_sheet()
