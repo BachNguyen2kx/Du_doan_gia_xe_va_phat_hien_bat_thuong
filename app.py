@@ -69,18 +69,50 @@ def load_requests():
 
 def append_request(req):
     sheet = connect_sheet()
-    sheet.append_row([
-        req["id_yêu_cầu"],
-        req["thời_gian"],
-        req["nguồn"],
-        req["trạng_thái"],
-        "",
-        json.dumps(req["user_input"], ensure_ascii=False),
-        json.dumps(req["model_output"], ensure_ascii=False)
-    ])
 
-    st.write("📌 Đã append. Số dòng hiện tại:", sheet.row_count)
-    st.success("📌 Đã gửi yêu cầu lên Google Sheets!")
+    # --- CHUYỂN TOÀN BỘ DỮ LIỆU THÀNH PYTHON THUẦN (không numpy) ---
+    def pure_python(obj):
+        if isinstance(obj, list):
+            return [pure_python(v) for v in obj]
+        if isinstance(obj, dict):
+            return {k: pure_python(v) for k, v in obj.items()}
+        if isinstance(obj, (np.integer,)):
+            return int(obj)
+        if isinstance(obj, (np.floating,)):
+            return float(obj)
+        if pd.isna(obj):
+            return None
+        return obj
+
+    # Dữ liệu đưa vào JSON phải ở dạng Python thuần
+    user_data_clean  = pure_python(req["user_input"])
+    model_data_clean = pure_python(req["model_output"])
+
+    # Tạo JSON sạch
+    try:
+        user_json  = json.dumps(user_data_clean, ensure_ascii=False)
+        model_json = json.dumps(model_data_clean, ensure_ascii=False)
+    except Exception as e:
+        st.error(f"❌ Lỗi JSON khi chuẩn bị ghi Google Sheet: {e}")
+        return
+
+    try:
+        sheet.append_row([
+            req["id_yêu_cầu"],
+            req["thời_gian"],
+            req["nguồn"],
+            req["trạng_thái"],
+            "",            
+            user_json,
+            model_json
+        ])
+
+        st.success("📌 Đã gửi yêu cầu lên Google Sheets!")
+        st.write("📌 Tổng số dòng hiện tại:", sheet.row_count)
+
+    except Exception as e:
+        st.error(f"❌ Google Sheets từ chối ghi dữ liệu: {e}")
+
 
 
 def update_request(row_index, new_status, note):
