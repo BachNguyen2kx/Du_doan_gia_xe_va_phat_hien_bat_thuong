@@ -1921,9 +1921,9 @@ if st.session_state.admin_logged_in:
                     ket_luan = ""
                     ly_do_raw = ""
 
-                    if "Kết luận:" in model_text:
-                        parts = model_text.split("Lý do:")
-                        ket_luan = parts[0].replace("Kết luận:", "").strip()
+                    if "Kết_luận:" in model_text:
+                        parts = model_text.split("Lý_do:")
+                        ket_luan = parts[0].replace("Giá_dự_đoán:", "").replace("Kết_luận:", "").strip()
                         ly_do_raw = parts[1].strip() if len(parts) > 1 else ""
                     else:
                         ket_luan = "Không xác định"
