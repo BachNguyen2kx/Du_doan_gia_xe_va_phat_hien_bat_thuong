@@ -1870,19 +1870,9 @@ if st.session_state.admin_logged_in:
                             ln.strip(" -•") for ln in ly_do_raw.replace("<br>", "\n").split("\n")
                             if ln.strip()
                         ]
-
-                        # HIỂN THỊ KẾT LUẬN + LÝ DO
-                        st.markdown("### 📜 Kết luận & Lý do")
-
-                        if ket_luan.lower() == "bình thường":
-                            st.success(f"✔ **Kết luận:** {ket_luan}")
-                            st.info("✔ Tin này là *bình thường* – không có lý do chi tiết.")
-                        else:
-                            st.error(f"🚨 **Kết luận:** {ket_luan}")
-
-                            with st.expander("📌 Xem lý do chi tiết"):
-                                for ln in ly_do_lines:
-                                    st.markdown(f"<span style='color:#ff4b4b;'>• {ln}</span>", unsafe_allow_html=True)
+                        with st.expander("📌 Xem lý do chi tiết"):
+                            for ln in ly_do_lines:
+                                st.markdown(f"<span style='color:#ff4b4b;'>• {ln}</span>", unsafe_allow_html=True)
 
 
                     note = st.text_area(
