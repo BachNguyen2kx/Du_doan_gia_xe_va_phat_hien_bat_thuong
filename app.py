@@ -1340,23 +1340,40 @@ with tab1:
             if "file_user_input" not in st.session_state or "file_model_output" not in st.session_state:
                 st.error("❗ Bạn cần chạy dự đoán hoặc phát hiện bất thường trước!")
             else:
-                user_list = st.session_state["file_user_input"]
-                user_text = json.dumps(user_list, ensure_ascii=False).replace("\n", " ")
-                model_list = st.session_state["file_model_output"]
+                user_list  = st.session_state["file_user_input"]      # list[dict] – input từng dòng
+                model_list = st.session_state["file_model_output"]    # list[dict] – output từng dòng
 
-                model_text = ""
-                for i, row in enumerate(model_list):
-                    ket = row.get("Kết_luận_cuối", "")
-                    lydo = row.get("Loại_bất_thường", "")
-                    lydo = lydo.replace("<br>", "\n").replace("•", "-").replace("**", "")
-                    model_text += f"[Dòng {i+1}] Kết luận: {ket}\nLý do:\n{lydo}\n\n"
-                id_sent = push_request_to_admin(
-                    user_data=user_text,
-                    model_data=model_text,
-                    source="file"
-                )
+                if len(user_list) != len(model_list):
+                    st.error("❌ Số dòng input và output không khớp!")
+                else:
+                    new_ids = []
+                    abn_cnt = 0
+                    norm_cnt = 0
 
-                st.success(f"✔ Đã gửi dataset thành công! Mã yêu cầu: {id_sent}")
+                    for i in range(len(user_list)):
+                        user_row  = user_list[i]      # dict của 1 dòng
+                        model_row = model_list[i]     # dict của 1 dòng (có Kết_luận_cuối, Loại_bất_thường)
+
+                        # Đếm xem dòng này là bất thường hay bình thường
+                        ket = str(model_row.get("Kết_luận_cuối", "")).lower()
+                        if "bất thường" in ket or "vi phạm" in ket:
+                            abn_cnt += 1
+                        else:
+                            norm_cnt += 1
+
+                        req_id = push_request_to_admin(
+                            user_data=user_row,
+                            model_data=model_row,
+                            source="file"
+                        )
+                        new_ids.append(req_id)
+
+                    st.success(
+                        f"✔ Đã gửi {len(new_ids)} dòng cho Admin: "
+                        f"{abn_cnt} dòng BẤT THƯỜNG, {norm_cnt} dòng BÌNH THƯỜNG."
+                    )
+                    st.info("🆔 Mã yêu cầu mới:\n" + "\n".join(new_ids))
+
 
 
                     
@@ -1713,29 +1730,81 @@ if st.session_state.admin_logged_in:
         if reqs.empty:
             st.info("Chưa có yêu cầu nào.")
         else:
-            for idx, req in reqs.iterrows():
+            # Chia theo trạng thái
+            pending_df  = reqs[reqs["trạng_thái"] == "pending"]
+            approved_df = reqs[reqs["trạng_thái"] == "approved"]
+            rejected_df = reqs[reqs["trạng_thái"] == "rejected"]
+
+            # ====== THÔNG BÁO TIN MỚI ======
+            if not pending_df.empty:
+                msg_items = []
+                for _, r in pending_df.iterrows():
+                    text = str(r["kết_quả_mô_hình"]).lower()
+                    if "bất thường" in text or "vi phạm" in text:
+                        status_txt = "Bất thường"
+                    else:
+                        status_txt = "Bình thường"
+                    msg_items.append(f"{r['id_yêu_cầu']} ({status_txt})")
+
+                st.info("🔔 Tin mới chờ duyệt: " + ", ".join(msg_items))
+
+                # Tách pending thành Bất thường / Bình thường
+                abn_mask = pending_df["kết_quả_mô_hình"].str.contains(
+                    "bất thường|vi phạm", case=False, na=False
+                )
+                pending_abn  = pending_df[abn_mask]
+                pending_norm = pending_df[~abn_mask]
+
+                st.markdown("### 🚨 Tin BẤT THƯỜNG (Pending)")
+                if pending_abn.empty:
+                    st.write("Không có tin bất thường đang chờ.")
+                else:
+                    st.dataframe(
+                        pending_abn[["id_yêu_cầu", "thời_gian", "kết_quả_mô_hình"]],
+                        use_container_width=True
+                    )
+
+                st.markdown("### ✅ Tin BÌNH THƯỜNG (Pending)")
+                if pending_norm.empty:
+                    st.write("Không có tin bình thường đang chờ.")
+                else:
+                    st.dataframe(
+                        pending_norm[["id_yêu_cầu", "thời_gian", "kết_quả_mô_hình"]],
+                        use_container_width=True
+                    )
+            else:
+                st.success("Không có yêu cầu pending nào.")
+
+            st.markdown("---")
+            st.subheader("🔍 Chi tiết từng yêu cầu ( chỉ Pending )")
+
+            # ====== EXPAND CHI TIẾT CHỈ CHO PENDING ======
+            for idx, req in pending_df.iterrows():
                 with st.expander(f"🔍 {req['thời_gian']} | {req['id_yêu_cầu']} | {req['trạng_thái']}"):
-                    
+
                     st.markdown("### 📌 Dữ liệu người dùng")
-
-                    # Chuyển JSON → list → DataFrame
                     try:
-                        user_list = json.loads(req["dữ_liệu_người_dùng"])
-                        df_user = pd.DataFrame(user_list)
-                        st.dataframe(df_user, use_container_width=True)
+                        raw_user = req["dữ_liệu_người_dùng"]
+                        user_obj = json.loads(raw_user) if isinstance(raw_user, str) else raw_user
 
+                        if isinstance(user_obj, dict):
+                            df_user = pd.DataFrame([user_obj])
+                        elif isinstance(user_obj, list):
+                            df_user = pd.DataFrame(user_obj)
+                        else:
+                            df_user = pd.DataFrame([{"data": user_obj}])
+
+                        st.dataframe(df_user, use_container_width=True)
                     except Exception as e:
                         st.error(f"Lỗi đọc dữ liệu người dùng: {e}")
                         st.code(req["dữ_liệu_người_dùng"])
 
-
-
                     st.markdown("### 🤖 Kết quả mô hình")
 
                     model_text = req["kết_quả_mô_hình"]
-
                     rows = []
-                    for block in model_text.strip().split("\n\n"):
+                    # mỗi request mới chỉ có 1 block "Kết luận: ...\nLý do: ..."
+                    for block in str(model_text).strip().split("\n\n"):
                         if "Kết luận" in block:
                             lines = block.split("\n")
                             ket = lines[0].replace("Kết luận:", "").strip()
@@ -1745,18 +1814,39 @@ if st.session_state.admin_logged_in:
                     df_model = pd.DataFrame(rows)
                     st.dataframe(df_model, use_container_width=True)
 
-
-                    note = st.text_area("Ghi chú admin", value=req["ghi_chú_admin"], key="note_"+str(req["id_yêu_cầu"]))
+                    note = st.text_area(
+                        "Ghi chú admin",
+                        value=req["ghi_chú_admin"],
+                        key="note_" + str(req["id_yêu_cầu"])
+                    )
 
                     colA, colB = st.columns(2)
-
-                    if colA.button("✔ Duyệt", key="ap_"+str(req["id_yêu_cầu"])):
+                    if colA.button("✔ Duyệt", key="ap_" + str(req["id_yêu_cầu"])):
                         update_request(idx, "approved", note)
                         st.success("✔ Đã duyệt và lưu vào Google Sheet!")
                         st.rerun()
 
-                    if colB.button("❌ Từ chối", key="rej_"+str(req["id_yêu_cầu"])):
+                    if colB.button("❌ Từ chối", key="rej_" + str(req["id_yêu_cầu"])):
                         update_request(idx, "rejected", note)
                         st.error("❌ Đã từ chối và lưu vào Google Sheet!")
                         st.rerun()
+            st.markdown("---")
+            st.subheader("✔ Danh sách ĐÃ PHÊ DUYỆT")
+
+            if approved_df.empty:
+                st.write("Chưa có yêu cầu nào được phê duyệt.")
+            else:
+                st.dataframe(
+                    approved_df[["id_yêu_cầu", "thời_gian", "kết_quả_mô_hình", "ghi_chú_admin"]],
+                    use_container_width=True
+                )
+
+            st.markdown("### ❌ Danh sách ĐÃ TỪ CHỐI")
+            if rejected_df.empty:
+                st.write("Chưa có yêu cầu nào bị từ chối.")
+            else:
+                st.dataframe(
+                    rejected_df[["id_yêu_cầu", "thời_gian", "kết_quả_mô_hình", "ghi_chú_admin"]],
+                    use_container_width=True
+                )
 
