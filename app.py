@@ -1005,8 +1005,8 @@ with tab1:
 
             # Chạy pipeline
             out_full, out_view = pipeline.run(df_input)
-            st.session_state["last_user_input"]  = df_input.to_dict(orient="records")[0]
-            st.session_state["last_model_output"] = out_view.to_dict(orient="records")[0]
+            st.session_state["file_user_input"]  = df_input.to_dict(orient="records")
+            st.session_state["file_model_output"] = out_view.to_dict(orient="records")
             cols_reason = []
 
             if "id" in out_view.columns:
@@ -1212,8 +1212,8 @@ with tab1:
 
             # Chạy pipeline
             out_full, out_view = pipeline.run(df_input)
-            st.session_state["last_user_input"]  = df_input.to_dict(orient="records")[0]
-            st.session_state["last_model_output"] = out_view.to_dict(orient="records")[0]
+            st.session_state["last_user_input"]  = df_input.to_dict(orient="records")
+            st.session_state["last_model_output"] = out_view.to_dict(orient="records")
             # BẢNG LÝ DO THEO ID
             df_reason = out_view.copy()
 
@@ -1329,29 +1329,16 @@ with tab1:
         btn_send_file = st.button("📮 Gửi dữ liệu file cho Admin", key="send_request_file")
 
         if btn_send_file:
+            if "file_user_input" not in st.session_state or "file_model_output" not in st.session_state:
+                st.error("❗ Bạn cần chạy dự đoán hoặc phát hiện bất thường trước!")
+            else:
+                id_sent = push_request_to_admin(
+                    user_data=st.session_state["file_user_input"],
+                    model_data=st.session_state["file_model_output"],
+                    source="file"
+                )
+                st.success(f"✔ Đã gửi dataset thành công! Mã yêu cầu: {id_sent}")
 
-            # 1) User_data = list → text gọn
-            user_list = df_input.to_dict(orient="records")
-            user_text = json.dumps(user_list, ensure_ascii=False).replace("\n", " ")
-
-            # 2) Model_data = format đẹp
-            model_list = out_view.to_dict(orient="records")
-
-            model_text = ""
-            for i, row in enumerate(model_list):
-                ket = row.get("Kết_luận_cuối", "")
-                lydo = row.get("Loại_bất_thường", "")
-                lydo = lydo.replace("<br>", "\n").replace("•", "-").replace("**", "")
-                model_text += f"[Dòng {i+1}] Kết luận: {ket}\nLý do:\n{lydo}\n\n"
-
-            # 3) Gửi sheet
-            id_sent = push_request_to_admin(
-                user_data=user_text,
-                model_data=model_text,
-                source="file"
-            )
-
-            st.success(f"✔ Đã gửi dataset thành công! Mã yêu cầu: {id_sent}")
 
                     
 # 2 TRANG GIỚI THIỆU
