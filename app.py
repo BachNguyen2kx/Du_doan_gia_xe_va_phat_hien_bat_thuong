@@ -18,6 +18,7 @@ import os
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import base64
+from google.oauth2.service_account import Credentials
 
 
 def connect_sheet():
@@ -1650,3 +1651,4 @@ if st.session_state.admin_logged_in:
                         update_request(idx, "rejected", note)
                         st.error("❌ Đã từ chối và lưu vào Google Sheet!")
                         st.rerun()
+
