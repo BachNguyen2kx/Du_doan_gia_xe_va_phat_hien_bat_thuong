@@ -86,8 +86,15 @@ def append_request(req):
     model_clean = pure_python(req["model_output"])
 
     # ----- Tách kết luận & lý do -----
-    ket_luan = model_clean.get("Kết_luận_cuối", "")
-    ly_do_html = model_clean.get("Loại_bất_thường", "")
+    if isinstance(model_clean, dict):
+        ket_luan = model_clean.get("Kết_luận_cuối", "")
+        ly_do_html = model_clean.get("Loại_bất_thường", "")
+
+    # Nếu model_clean là string (CASE 2)
+    else:
+        ket_luan = ""
+        ly_do_html = str(model_clean)
+
 
     # Chuyển HTML thành text dễ đọc
     ly_do_text = (
