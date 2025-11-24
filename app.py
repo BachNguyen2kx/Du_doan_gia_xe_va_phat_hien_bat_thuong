@@ -1111,19 +1111,18 @@ with tab1:
                 st.dataframe(show_df[[c for c in cols_show if c in show_df.columns]])
                 st.markdown("### 📤 Gửi yêu cầu cho Admin")
 
-                send_manual = st.button("📮 Gửi yêu cầu duyệt đăng", key="send_req_manual")
+                btn_send = st.button("📮 Gửi yêu cầu duyệt đăng", key="send_request_manual")
 
-                if send_manual:
-                    if "last_user_input" in st.session_state:
+                if btn_send:
+                    if "last_user_input" not in st.session_state or "last_model_output" not in st.session_state:
+                        st.error("❗ Bạn cần chạy dự đoán hoặc phát hiện bất thường trước!")
+                    else:
                         id_sent = push_request_to_admin(
                             user_data=st.session_state["last_user_input"],
                             model_data=st.session_state["last_model_output"],
                             source="manual"
                         )
-                        st.success(f"✔ Gửi yêu cầu thành công! Mã yêu cầu: {id_sent}")
-                    else:
-                        st.error("Bạn cần chạy dự đoán trước khi gửi yêu cầu!")
-
+                        st.success(f"✔ Đã gửi yêu cầu thành công! Mã yêu cầu: **{id_sent}**")
 
 
 
