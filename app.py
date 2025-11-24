@@ -1176,7 +1176,7 @@ with tab1:
             - Mô_tả_chi_tiết  
             - Địa_chỉ  
             """)
-            st.warning("⚠ Thiếu cột → hệ thống sẽ báo lỗi.", icon="⚠️")
+            st.warning(" Thiếu cột → hệ thống sẽ báo lỗi.", icon="⚠️")
 
         if (btn_predict_file or btn_anom_file) and file is not None:
             # Đọc file
@@ -1717,12 +1717,34 @@ if st.session_state.admin_logged_in:
                 with st.expander(f"🔍 {req['thời_gian']} | {req['id_yêu_cầu']} | {req['trạng_thái']}"):
                     
                     st.markdown("### 📌 Dữ liệu người dùng")
-                    st.json(json.loads(req["dữ_liệu_người_dùng"]))
+
+                    # Chuyển JSON → list → DataFrame
+                    try:
+                        user_list = json.loads(req["dữ_liệu_người_dùng"])
+                        df_user = pd.DataFrame(user_list)
+                        st.dataframe(df_user, use_container_width=True)
+
+                    except Exception as e:
+                        st.error(f"Lỗi đọc dữ liệu người dùng: {e}")
+                        st.code(req["dữ_liệu_người_dùng"])
 
 
 
                     st.markdown("### 🤖 Kết quả mô hình")
-                    st.json(json.loads(req["kết_quả_mô_hình"]))
+
+                    model_text = req["kết_quả_mô_hình"]
+
+                    rows = []
+                    for block in model_text.strip().split("\n\n"):
+                        if "Kết luận" in block:
+                            lines = block.split("\n")
+                            ket = lines[0].replace("Kết luận:", "").strip()
+                            lydo = " ".join(lines[1:]).replace("Lý do:", "").strip()
+                            rows.append({"Kết_luận": ket, "Lý_do": lydo})
+
+                    df_model = pd.DataFrame(rows)
+                    st.dataframe(df_model, use_container_width=True)
+
 
                     note = st.text_area("Ghi chú admin", value=req["ghi_chú_admin"], key="note_"+str(req["id_yêu_cầu"]))
 
