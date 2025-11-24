@@ -965,6 +965,8 @@ with tab1:
 
             # Chạy pipeline
             out_full, out_view = pipeline.run(df_input)
+            st.session_state["last_user_input"]  = df_input.to_dict(orient="records")[0]
+            st.session_state["last_model_output"] = out_view.to_dict(orient="records")[0]
             cols_reason = []
 
             if "id" in out_view.columns:
@@ -1073,8 +1075,6 @@ with tab1:
                 ]
 
                 st.dataframe(show_df[[c for c in cols_show if c in show_df.columns]])
-                st.session_state["last_user_input"]  = df_input.to_dict(orient="records")[0]
-                st.session_state["last_model_output"] = out_view.to_dict(orient="records")[0]
                 st.markdown("### 📤 Gửi yêu cầu cho Admin")
 
                 if st.button("📮 Gửi yêu cầu duyệt đăng", key="send_req_manual"):
@@ -1170,7 +1170,8 @@ with tab1:
 
             # Chạy pipeline
             out_full, out_view = pipeline.run(df_input)
-            
+            st.session_state["last_user_input"]  = df_input.to_dict(orient="records")[0]
+            st.session_state["last_model_output"] = out_view.to_dict(orient="records")[0]
             # BẢNG LÝ DO THEO ID
             df_reason = out_view.copy()
 
