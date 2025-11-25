@@ -1895,8 +1895,6 @@ if st.session_state.admin_logged_in:
                         status_txt = "Bình thường"
                     msg_items.append(f"{r['id_yêu_cầu']} ({status_txt})")
 
-                st.info("🔔 Tin mới chờ duyệt: " + ", ".join(msg_items))
-
                 # Tách pending thành Bất thường / Bình thường
                 abn_mask = pending_df["kết_quả_mô_hình"].str.contains(
                     "bất thường|vi phạm", case=False, na=False
@@ -2048,23 +2046,23 @@ if st.session_state.admin_logged_in:
                         st.error("❌ Đã từ chối và lưu vào Google Sheet!")
                         st.rerun()
             st.markdown("---")
-            st.subheader("✔ Danh sách ĐÃ PHÊ DUYỆT")
+            
+            with st.expander("✔ Danh sách ĐÃ PHÊ DUYỆT"):
+                if approved_df.empty:
+                    st.write("Chưa có yêu cầu nào được phê duyệt.")
+                else:
+                    st.dataframe(
+                        approved_df[["id_yêu_cầu", "thời_gian", "kết_quả_mô_hình", "ghi_chú_admin"]],
+                        use_container_width=True
+                    )
 
-            if approved_df.empty:
-                st.write("Chưa có yêu cầu nào được phê duyệt.")
-            else:
-                st.dataframe(
-                    approved_df[["id_yêu_cầu", "thời_gian", "kết_quả_mô_hình", "ghi_chú_admin"]],
-                    use_container_width=True
-                )
 
-            st.markdown("### ❌ Danh sách ĐÃ TỪ CHỐI")
-            if rejected_df.empty:
-                st.write("Chưa có yêu cầu nào bị từ chối.")
-            else:
-                st.dataframe(
-                    rejected_df[["id_yêu_cầu", "thời_gian", "kết_quả_mô_hình", "ghi_chú_admin"]],
-                    use_container_width=True
-                )
-
+            with st.expander("❌ Danh sách ĐÃ TỪ CHỐI"):
+                if rejected_df.empty:
+                    st.write("Chưa có yêu cầu nào bị từ chối.")
+                else:
+                    st.dataframe(
+                        rejected_df[["id_yêu_cầu", "thời_gian", "kết_quả_mô_hình", "ghi_chú_admin"]],
+                        use_container_width=True
+                    )
 
