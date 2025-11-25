@@ -852,13 +852,6 @@ with st.sidebar:
 
     <div class="sb-block">
         <div class="sb-title">🎓 Đồ án tốt nghiệp<br>Data Science</div>
-
-        <div style="
-            font-size:15px;
-            color:#BBBBBB;
-            margin-top: -5px;
-            margin-left: 2px;
-        ">
             📅 Thời gian: 29/11/2025
         </div>
     </div>
@@ -1996,5 +1989,6 @@ if st.session_state.admin_logged_in:
                     rejected_df[["id_yêu_cầu", "thời_gian", "kết_quả_mô_hình", "ghi_chú_admin"]],
                     use_container_width=True
                 )
+
 
 
