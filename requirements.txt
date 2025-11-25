@@ -5,6 +5,7 @@ scipy
 joblib
 regex
 unicodedata2
+plotly
 
 #  Stats 
 statsmodels
