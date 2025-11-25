@@ -1797,28 +1797,37 @@ if st.session_state.admin_logged_in:
         c2.metric("Đang chờ", pending)
         c3.metric("Đã xử lý", f"{approved} ✔ / {rejected} ✖")
         
-        #   BIỂU ĐỒ TỔNG QUAN (3 biểu đồ nằm ngang) 
         with st.expander("📊 Xem biểu đồ tổng quan"):
 
-            # Chuẩn hóa dữ liệu
+            # Chuẩn hóa
             reqs_plot = reqs.copy()
             reqs_plot["thời_gian"] = pd.to_datetime(reqs_plot["thời_gian"], errors="coerce")
-            reqs_plot["ngày"] = reqs_plot["thời_gian"].dt.date
 
-            # Detect nhóm bất thường / bình thường
-            def detect_abn(s):
-                s = str(s).lower()
-                if "bất thường" in s or "vi phạm" in s:
-                    return "Bất thường"
+            # Chỉ lấy ngày (không timestamp)
+            reqs_plot["ngày"] = reqs_plot["thời_gian"].dt.strftime("%Y-%m-%d")
+
+            # Lấy loại bất thường thật
+            def extract_type(model_text):
+                s = str(model_text).lower()
+                if "giá cao bất thường" in s:
+                    return "Giá cao bất thường"
+                if "giá thấp bất thường" in s:
+                    return "Giá thấp bất thường"
+                if "vi phạm min/max" in s:
+                    return "Vi phạm min/max"
                 return "Bình thường"
-            reqs_plot["nhóm"] = reqs_plot["kết_quả_mô_hình"].apply(detect_abn)
 
-            # === Tạo 3 cột ngang ===
+            reqs_plot["nhóm"] = reqs_plot["kết_quả_mô_hình"].apply(extract_type)
+
+            # Tạo 3 columns
             colA, colB, colC = st.columns(3)
-            #  PIE CHART TRẠNG THÁI
+
+            # === 1) PIE CHART TRẠNG THÁI ===
             with colA:
                 st.markdown("### 🥧 Trạng thái yêu cầu")
+
                 status_count = reqs_plot["trạng_thái"].value_counts()
+
                 fig1 = px.pie(
                     names=status_count.index,
                     values=status_count.values,
@@ -1827,32 +1836,41 @@ if st.session_state.admin_logged_in:
                 fig1.update_traces(textinfo="label+percent")
                 st.plotly_chart(fig1, use_container_width=True)
 
-            #  TIME SERIES — THEO NGÀY
+            # === 2) TIME SERIES THEO NGÀY ===
             with colB:
                 st.markdown("### 📈 Xu hướng theo thời gian")
-                ts = reqs_plot.groupby("ngày")["id_yêu_cầu"].count()
+
+                ts = reqs_plot.groupby("ngày")["id_yêu_cầu"].count().reset_index()
 
                 fig2 = px.line(
                     ts,
+                    x="ngày",
+                    y="id_yêu_cầu",
                     markers=True,
-                    labels={"value": "Số yêu cầu", "ngày": "Ngày"}
+                    labels={"ngày": "Ngày", "id_yêu_cầu": "Số yêu cầu"}
                 )
-                fig2.update_traces(textposition="top center")
+                fig2.update_xaxes(type="category")  # CHỈ HIỆN NGÀY
+                fig2.update_traces(text=ts["id_yêu_cầu"], textposition="top center")
+
                 st.plotly_chart(fig2, use_container_width=True)
 
-            # 3️⃣ BAR CHART BÌNH THƯỜNG / BẤT THƯỜNG
+            # === 3) BAR CHART — PHÂN LOẠI BẤT THƯỜNG ===
             with colC:
-                st.markdown("### 📊 Bình thường vs Bất thường")
+                st.markdown("### 📊 Phân loại bất thường")
 
-                abn_count = reqs_plot["nhóm"].value_counts()
+                abn_count = reqs_plot["nhóm"].value_counts().reset_index()
+                abn_count.columns = ["Loại", "Số lượng"]
 
                 fig3 = px.bar(
-                    x=abn_count.index,
-                    y=abn_count.values,
-                    text=abn_count.values,
-                    labels={"x": "Nhóm", "y": "Số lượng"},
+                    abn_count,
+                    x="Loại",
+                    y="Số lượng",
+                    color="Loại",              # màu khác nhau cho từng loại
+                    text="Số lượng"
                 )
                 fig3.update_traces(textposition="outside")
+                fig3.update_layout(showlegend=False)
+
                 st.plotly_chart(fig3, use_container_width=True)
 
         st.markdown("---")
