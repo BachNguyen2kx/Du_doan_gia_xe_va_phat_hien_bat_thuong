@@ -912,9 +912,10 @@ with st.sidebar:
             "🌥 WordCloud",
             "🤖 Modeling",
             "🚨 Anomaly Detection",
+            "🧭 Cách phát hiện bất thường (Quy trình hoạt động)",
             "🧪 Evaluation",
-            "👥 Phân công công việc",
-            "🧭 Cách phát hiện bất thường (Quy trình hoạt động)" 
+            "👥 Phân công công việc"
+            
             
         ]
     )
@@ -2063,5 +2064,6 @@ if st.session_state.admin_logged_in:
                         rejected_df[["id_yêu_cầu", "thời_gian", "kết_quả_mô_hình", "ghi_chú_admin"]],
                         use_container_width=True
                     )
+
 
 
