@@ -1370,9 +1370,7 @@ with tab1:
                     if col in df_show.columns:
                         df_show[col] = df_show[col].apply(
                             lambda x: f"{int(x):,}" if pd.notna(x) else ""
-                        )
-                st.markdown("### 📤 Gửi danh sách bất thường cho Admin")
-        
+                        )        
                 # Các dòng bất thường
                 df_abn  = out_view[out_view["Kết_luận_cuối"] != "Bình thường"].copy()
                 df_norm = out_view[out_view["Kết_luận_cuối"] == "Bình thường"].copy()
@@ -2065,4 +2063,5 @@ if st.session_state.admin_logged_in:
                         rejected_df[["id_yêu_cầu", "thời_gian", "kết_quả_mô_hình", "ghi_chú_admin"]],
                         use_container_width=True
                     )
+
 
