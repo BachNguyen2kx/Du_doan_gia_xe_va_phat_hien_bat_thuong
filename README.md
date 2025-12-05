@@ -23,7 +23,7 @@
     ├── 📘price_pipeline_module.py   
     ├── 📁 RandomForest_model_pyspark_b1_1
     ├── 📘 Project1_HoangAnh_XuanBach.ipynb    ← File xử lý dữ liệu, EDA, huấn luyện và chọn mô hình giải quyết vến đề
-    ├── 📊 Project01_HoangAnh_XuanBach.pptx   ← File báo cáo, thuyết trình đồ á
+    ├── 📊 Project01_HoangAnh_XuanBach.pptx   ← File báo cáo, thuyết trình đồ án
     ├── 📄 app.py  (hoặc app - Copy.py)       ← File chạy ứng dụng người dùng cuối (streamlit)
     ├── 📄 requirements.txt
     ├── 📄 Procfile
